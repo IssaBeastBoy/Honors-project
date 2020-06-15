@@ -57,6 +57,7 @@ def display_page(pathname):
         while start < len(PharmacoInformation):
             storeList.append(PharmacoInformation[start])
             start = start + 1
+        
         file_UploadedInfo.append(storeList[2]) 
         file_UploadedInfo.append(storeList[0]) 
         file_UploadedInfo.append(storeList[1])
@@ -380,10 +381,10 @@ def ticked_Files(value):
     else:
         selected_Files.clear()
         start = 0
-        while start < len(value):
+        while start < len(value):        
             selected_Files.append(value[start])
             start = start + 1 
-    
+
 #Call back for drawing plot
 @app.callback(
     Output('Plot', 'children'),
@@ -391,7 +392,7 @@ def ticked_Files(value):
 )
 
 def Figure(value):
-    avialable_Plot = ['Bar_Graph', 'Pie_Chart']    
+    avialable_Plot = ['Bar_Graph', 'Scatter']    
     if value is None:
         if len(selected_Files) == 0:
             layout = html.Div(

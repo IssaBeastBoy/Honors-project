@@ -79,10 +79,11 @@ def bottomPart():
                     ]),
                 dbc.Row([
                         html.Center(html.B('Available plots')),
+                        html.Br(),
                         dcc.RadioItems(
                             options=[
                                 {'label':'Bar Graph', 'value': '1'},
-                                {'label':'Pie Chart', 'value': '2'},
+                                {'label':'Scatter Plot', 'value': '2'},
                                 {'label': '...', 'value': '3'}
                             ],
                             id = 'Plot_Options',
