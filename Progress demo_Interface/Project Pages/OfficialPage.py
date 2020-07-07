@@ -1,15 +1,15 @@
 import mysql.connector
 import base64
-import plotly.graph_objects as plot 
 import dash
 import dash_bootstrap_components as dbc 
 import dash_core_components as dcc 
 import dash_html_components as html 
-from dash.dependencies import Input, Output, State
+from dash.dependencies import Input, Output, State, ALL, State, Match, ALLSMALLER
+from plotly import graph_objs as plot
 
 from HomePage import Homepage
 from UploadPage import Upload, PharmacoInformation
-from Methods import VCF_FileParse, Plot_points, Add_CheckBoxMW, selected_Files, setting_CheckBOXMW, upLoaded_Details, Pharmaco_VariantParse, get_EnzymeVariants, Plotly_graph
+from Methods import VCF_FileParse, Coordinates, Plot_points, Add_CheckBoxMW, selected_Files, setting_CheckBOXMW, upLoaded_Details, Pharmaco_VariantParse, get_EnzymeVariants, Plotly_graph
 from MainWindow import MainWindow, storeOptions
 from MW_Topbuttons import share_Variants, unique_Variants, drug_Affected, SU_button, AV_button, DrugA_button, AlleleInfo_button, AI
 
@@ -18,7 +18,7 @@ Database = mysql.connector.connect(
     user = 'root',
     passwd = 'PharmacoEnzymeVariantInfo@Thulani971108',
     database = 'enzyme_variantinfo',
-)
+    )
 
             # [ Variant heading, [Pharmaco variants contained in VCF file] ]
 File_details = []
@@ -60,7 +60,7 @@ def display_page(pathname):
         
         file_UploadedInfo.append(storeList[2]) 
         file_UploadedInfo.append(storeList[0]) 
-        file_UploadedInfo.append(storeList[1])
+        file_UploadedInfo.append(Coordinates[storeList[1]])
         variant_Info = Pharmaco_VariantParse(get_EnzymeVariants(Database, storeList[0]), File_details[0])
         file_UploadedInfo.append(variant_Info[1])
         file_UploadedInfo.append(variant_Info[2])
@@ -173,7 +173,7 @@ def populationGroup(value):
 
 def AF(value):
     if value != None: 
-        popu = ['Esan, Nigeria - Code: ESN', 'Gambain, The Gambia - Code: GWD', 'Luhya, Kenya - Code: LWK','Mende, Sierra Leone - Code: MSL', 'Yoruba, Nigeria - Code: YRI']
+        popu = ['Esan', 'The Gambia', 'Luhya','Menda', 'Ibadan']
         PharmacoInformation[1]= popu[int(value)-1]
 
 
@@ -185,7 +185,7 @@ def AF(value):
 
 def EA(value):
     if value != None: 
-        popu = ['Chinses Dai, China - Code: CDX ', 'Han Chinese, China - Code: CHB', 'Japanese, Japan - Code: JPT ', 'Kibh, Vietnam- Code: KHV', 'Southern Han Chinese, China - Code: CHS ']
+        popu = ['Dai', 'Beijing', 'Tokyo', 'Kibh', 'Han']
         PharmacoInformation[1]= popu[int(value)-1]
 
 #Call back for South Asia population radio buttons
@@ -196,7 +196,7 @@ def EA(value):
 
 def SA(value):
     if value != None: 
-        popu = ['Bengali, India - Code: BEB','Gujarati, India - Code: GIH', 'Punjabi, Pakistan - Code: PJL']
+        popu = ['Bengali', 'Punjabi']
         PharmacoInformation[1]= popu[int(value)-1]
 
 #Call back for American population radio buttons
@@ -207,7 +207,7 @@ def SA(value):
 
 def AM(value):
     if value != None: 
-        popu = ['Colombian, Colmbia - Code: CLM ', 'Peruvian, Peru - Code: PEL', 'Puerto Rican, Puerto Rico - Code: PUR']
+        popu = ['Colombian', 'Peruvian', 'Puerto_Rican']
         PharmacoInformation[1]= popu[int(value)-1]
 
 #Call back for Ancestry population radio buttons
@@ -218,7 +218,7 @@ def AM(value):
 
 def AN(value):
     if value != None: 
-        popu = ['Telugu(Indian), UK - Code: ITU', 'Tami (Sri Lankan), UK - Code: STU', 'African, USA - Code: ASW', 'Caribbean, Barbados - Code: ACB', 'Mexican, USA - Code: MXL']
+        popu = ['Telugu', 'Tami', 'African', 'Caribbean', 'Gujarati', 'Mexican']
         PharmacoInformation[1]= popu[int(value)-1]
 
 #Call back for European population radio buttons
@@ -229,7 +229,7 @@ def AN(value):
 
 def EU(value):
     if value != None: 
-        popu = ['British/Scotish, UK - Code: GBR', 'Finnish, Finland - Code: FIN', 'Lberian, Spain - Code: IBS', 'Toscani, Italy - Code: TSI', 'Yoruba, Nigeria - Code: YRI']
+        popu = ['British/Scotish', 'Finnish', 'Lberian', 'Toscani']
         PharmacoInformation[1]= popu[int(value)-1]
 
 #Call back for Non Specfic population radio buttons
@@ -392,7 +392,7 @@ def ticked_Files(value):
 )
 
 def Figure(value):
-    avialable_Plot = ['Bar_Graph', 'Scatter']    
+    avialable_Plot = ['Bar_Graph', 'Scatter', 'Orthographic', 'natural_earth', 'Continential']    
     if value is None:
         if len(selected_Files) == 0:
             layout = html.Div(

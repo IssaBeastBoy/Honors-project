@@ -1,6 +1,6 @@
-import plotly.graph_objects as plot 
+from plotly import graph_objs as plot
 from plotly.subplots import make_subplots
-import plotly.express as plotex
+from plotly import express as plotex
 import math
 import dash
 import io
@@ -16,8 +16,37 @@ import numpy as np
 upLoad_requirements = []      
             # [ int(Value) of the uploaded file that are selected at the checkBox ]          
 selected_Files = []
-            # [ [ FileName, EnzymeName, PopulationGroup, Sample Size, AlleleInfo index, [Variant heading], [file variants] ] ]
+            # [ [ FileName, EnzymeName, dict(Population Location:{Latitude, Longitude, Continent, location}), Sample Size, AlleleInfo index, [Variant heading], [file variants] ] ]
 upLoaded_Details = []
+            # Contains all the global coordinates for all the population groups from 1000 Genome project
+Coordinates = {
+                'The Gambia':{'Lat': 13.42732173148185, 'Long':-15.303278821874962, 'Continent':'africa', 'location':'The Gambia'},
+                'Ibadan':{'Lat': 7.3777462, 'Long':3.8972497, 'Continent': 'africa', 'location':'Ibadan, Nigeria'},
+                'Dai':{'Lat': 39.0949984, 'Long':113.0430311, 'Continent': 'asia', 'location':'Xishuangbanna, China'},
+                'Beijing':{'Lat': 39.906217, 'Long':116.3912757, 'Continent': 'asia', 'location':'Beijing, China'},
+                'Tokyo':{'Lat': 35.6828387, 'Long': 139.7594549, 'Continent': 'asia', 'location':'Tokyo, Japan'},
+                'Han':{'Lat': 23.1301964, 'Long': 113.2592945 , 'Continent': 'asia', 'location':'Guangzhou City, China'},
+                'Kibh':{'Lat': 10.6497452, 'Long': 106.7619794, 'Continent': 'asia', 'location':'Ho Chi Minh City, Vietnam'},
+                'Luhya':{'Lat': 0.607628, 'Long': 34.7687756, 'Continent': 'africa', 'location':'Webuye, Kenya'},
+                'Esan':{'Lat': 6.5180735, 'Long': 3.6756969, 'Continent': 'africa', 'location':'Esan, Epe, Nigeria'},
+                'Mende':{'Lat': 8.922137, 'Long': -11.9448022, 'Continent': 'africa', 'location':'Mende, Bombali District, Sierra Leone'},
+                'Bengali':{'Lat': 24.4768783, 'Long': 90.2932426, 'Continent': 'asia', 'location':'Bangladesh'},
+                'Punjabi':{'Lat': 31.5656079, 'Long': 74.3141775, 'Continent': 'asia', 'location':'Lahore, Pakistan'},
+                'British/Scotish':{'Lat': 54.7023545, 'Long': -3.2765753, 'Continent': 'europe', 'location':'United Kingdom'},
+                'Finnish':{'Lat': 63.2467777, 'Long': 25.9209164, 'Continent': 'europe', 'location':'Finland'},
+                'Lberian':{'Lat': 39.3262345, 'Long': -4.8380649, 'Continent': 'europe', 'location':'Spain'},
+                'Toscani':{'Lat': 41.8747824, 'Long': 12.453984, 'Continent': 'europe', 'location':'Via Antonio Toscani, Italy'},
+                'Colombian':{'Lat': 2.8894434, 'Long': -73.783892, 'Continent': 'south america', 'location':'Colombia'},
+                'Peruvian':{'Lat': -12.0621065, 'Long': -77.0365256, 'Continent': 'south america', 'location':'Lima, Peru'},
+                'Puerto_Rican':{'Lat': 18.200178, 'Long': -66.664513, 'Continent': 'south america', 'location':' Puerto Rico'},
+                'Telugu':{'Lat': 54.7023545, 'Long': -3.2765753, 'Continent': 'europe', 'location':'United Kingdom'},
+                'Tami':{'Lat': 54.7023545, 'Long': -3.2765753, 'Continent': 'europe', 'location':'United Kingdom'},
+                'African':{'Lat': 31.8160381, 'Long': -99.5120986, 'Continent': 'north america', 'location':'SW USA'},
+                'Gujarati':{'Lat': 29.7589382, 'Long': -95.3676974, 'Continent': 'north america', 'location':'Houston, TX <br> United States of America'},
+                'Caribbean':{'Lat': 18.4, 'Long': -75, 'Continent': 'Island', 'location':'Haiti'},
+                'Mexican':{'Lat': 34.0536909, 'Long': -118.2427666, 'Continent': 'north america', 'location':'Los Angeles, CA <br> United States of America'},
+                #'':{'Lat': , 'Long': , 'Continent': '', 'location':''}                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            
+            }
 
 # returns [ [Variant heading], Sample Size, AlleleInfo index, [file variants] ]
 def VCF_FileParse (Files_contents, fileName):
@@ -81,8 +110,7 @@ def Plot_points (uploaded_info, selected_Files):
         start = start + 1
     return store_Data
 
-
-# returns ['File Name', 'Enzyme Name', 'Population', Panda(Enzyme: Variant, homo, hetero ), Panda(Variant, % , [homoValue, %], [heteroValues, %]) ]
+# returns ['File Name', 'Enzyme Name', dict(Population Location:{Latitude, Longitude, Continent, location}), Panda(Enzyme: Variant, homo, hetero ), Panda(Variant, % , [homoValue, %], [heteroValues, %]) ]
 def Data_Structure (Input_VCFdata):
     Organized_format = []
     Organized_format.append(Input_VCFdata[0])
@@ -141,189 +169,302 @@ def Data_Structure (Input_VCFdata):
     return Organized_format
 
 # returns a list of plot information grouped in same enzymes
-def Sort_info(Plot_info):
+def Sort_info(Plot_info, Plot_type):
     Sorted_PlotInfo = []
-    if len(Plot_info) == 1:
-        return Plot_info
-    else:
-        Sorted = []
-        Sorted.append(Plot_info[0])
-        enzyme = Plot_info[0][1]
-        del Plot_info[0]
-        while True:
-            index  = 0                       
-            while index < len(Plot_info):
-                if enzyme == Plot_info[index][1]:
-                    Sorted.append(Plot_info[index])                    
-                    del Plot_info[index]
+    if Plot_type == 'Bar_Graph' or Plot_type == 'Scatter':
+        if len(Plot_info) == 1:
+            Sorted_PlotInfo.append(Plot_info)
+            return Sorted_PlotInfo
+        else:
+            Sorted = []
+            Sorted.append(Plot_info[0])
+            enzyme = Plot_info[0][1]
+            del Plot_info[0]
+            while True:
+                index  = 0                       
+                while index < len(Plot_info):
+                    if enzyme == Plot_info[index][1]:
+                        Sorted.append(Plot_info[index])                    
+                        del Plot_info[index]
+                    if len(Plot_info) == 0:
+                        if len(Sorted) > 0:
+                            Sorted_PlotInfo.append(Sorted)
+                        return Sorted_PlotInfo
+                    index = index + 1
+                index = 0
+                save_info = []
+                while index < len(Sorted):
+                    save_info.append(Sorted[index])
+                    index = index + 1
+                Sorted_PlotInfo.append(save_info)
+                Sorted.clear()
                 if len(Plot_info) == 0:
                     if len(Sorted) > 0:
                         Sorted_PlotInfo.append(Sorted)
                     return Sorted_PlotInfo
-                index = index + 1
-            index = 0
-            save_info = []
-            while index < len(Sorted):
-                save_info.append(Sorted[index])
-                index = index + 1
-            Sorted_PlotInfo.append(save_info)
-            Sorted.clear()
-            if len(Plot_info) == 0:
-                if len(Sorted) > 0:
-                    Sorted_PlotInfo.append(Sorted)
-                return Sorted_PlotInfo
-            Sorted.append(Plot_info[0])
-            enzyme = Plot_info[0][1]
-            del Plot_info[0]
-    return Sorted_PlotInfo           
+                Sorted.append(Plot_info[0])
+                enzyme = Plot_info[0][1]
+                del Plot_info[0]
+        return Sorted_PlotInfo
+    else:
+        return Plot_info     
+
+# returns a list that is grouped per continent
+def Sort_continents(Plot_info):
+    output = []
+    parse = 0
+    Plot_info_COPY = []
+    while parse < len(Plot_info):
+        Plot_info_COPY.append(Plot_info[parse])
+        parse = parse + 1 
+    parse = 0
+    temp = []
+    temp.append(Plot_info_COPY[parse])
+    del Plot_info_COPY[0]
+    if Plot_info_COPY == []:
+        output.append(temp)
+        return output
+    while parse < len(Plot_info_COPY):
+        if temp[0][2]['Continent'] == Plot_info_COPY[parse][2]['Continent']:
+           temp.append(Plot_info_COPY[parse])
+           del Plot_info_COPY[parse]
+           parse = 0           
+        if parse == (len(Plot_info_COPY) - 1):
+            output.append(temp)
+            temp = []
+            temp.append(Plot_info_COPY[0])
+            del Plot_info_COPY[0]            
+            parse = 0
+        else:
+            parse = parse + 1
+        if Plot_info_COPY == []:
+            output.append(temp)
+            return output
+    return output
+
+# returns the specification of the subplots
+def subPlots_spec (data, boolen):
+    domains = []
+    specs = []
+    start = 0
+    if len(data) == 1:
+        if boolen:
+            specs.append([{'colspan': 2}, None])
+        else:
+            specs.append([{"type": "scattergeo", "colspan": 2}, None])
+        return specs
+    else:
+        while start < len(data):
+            if boolen:
+                domains.append({})
+            else:
+                domains.append({"type": "scattergeo"})
+            if len(domains) == 2:        
+                specs.append(domains)
+                domains = []
+            start = start + 1
+        if start%2 != 0:
+            if boolen:
+                specs.append([{'colspan': 2}, None])
+            else:
+                specs.append([{"type": "scattergeo", "colspan": 2}, None])
+              
+        return specs
+
+# returns a Panda {latitude, longitude, location, Homogenous, Heterogenous, Average Variant Percentage(%)} 
+def variant_Info(figure_data):
+    start = 0
+    latitude = []
+    longitude = []
+    location = []
+    Homo_detail = []
+    Hetero_detail = []
+    Enzyme = []
+    Marker = []
+    while start < len(figure_data):
+        latitude.append(figure_data[start][2]['Lat'])
+        longitude.append(figure_data[start][2]['Long'])
+        location.append(figure_data[start][2]['location'])
+        Enzyme.append(figure_data[start][1])
+        Homo_data = figure_data[start][4]['Homgeneous Count']
+        Hetero_data = figure_data[start][4]['Heterogenous Count']
+        parse = 0
+        homo_detail = 0
+        hetero_detail = 0
+        while parse < len(Homo_data):
+            homo_detail = homo_detail + Homo_data[parse][0]
+            hetero_detail = hetero_detail + Hetero_data[parse][0]
+            parse = parse + 1
+        homo_detail = (homo_detail/parse)
+        hetero_detail = (hetero_detail/parse)
+        average = (homo_detail + hetero_detail)/2
+        Homo_detail.append(str(homo_detail) + '% <br>')
+        Hetero_detail.append( str(hetero_detail) + '% <br>')
+        Marker.append(average)
+        start = start + 1
+    data = {'Enzy':Enzyme, 'Lat':latitude, 'Long':longitude, 'loc': location, 'Homogenous': Homo_detail, 'Heterogenous': Hetero_detail, 'Average Variant Percentage(%)': Marker}
+    data = Data_Frame.DataFrame(data)
+    return data
 
 # returns a graph base on user selection
 def Plotly_graph(Plot_info, Plot_type):
     data = []
-    figure_data = Sort_info(Plot_info)
+    figure_data = Sort_info(Plot_info, Plot_type)
+ 
     if Plot_type == 'Bar_Graph':
-        if len(Plot_info) == 1: 
+        specs = subPlots_spec(figure_data, True)
+        rows = math.ceil(len(figure_data)/2)
+        figure = make_subplots(
+                        rows=rows, cols=2, specs= specs)
+        parse_Points = 0
+        col = 1
+        row = 1
+        while parse_Points < len(figure_data):
             start = 0
-            while start < len(Plot_info):
-                file_name = Plot_info[start][0]
-                Enzyme_name = Plot_info[start][1]
-                data.append(plot.Bar(
+            plots = figure_data[parse_Points]  
+            while start < len(plots):                    
+                file_name = plots[start][0]
+                Enzyme_name = plots[start][1]
+                figure.add_trace(plot.Bar(
                     name = (file_name + ' - ' + Enzyme_name),
-                    x = Plot_info[start][4]['Variants ID'],
-                    y = Plot_info[start][4]['Percentage']
-                    ))
-                start = start + 1
-            figure = plot.Figure(data = data)
-            figure.update_layout(
-                                barmode = 'group',
-                                title_text = 'Pharmaco variant found',
-                                xaxis = dict(
-                                    title = 'Variant ID',
-                                    titlefont_size=16,
-                                    tickfont_size=14,
-                                    ),
-                                yaxis = dict(
-                                    title ='Percentage (%)',
-                                    titlefont_size=16,
-                                    tickfont_size=14,
-                                    )
-                                )
-        else:
-            domains = []
-            specs = []
-            start = 0
-            while start < len(figure_data):
-                domains.append({})    
-                if len(domains) == 2:        
-                    specs.append(domains)
-                    domains = []
-                start = start + 1
-            if start%2 != 0:
-                specs.append([{'colspan': 2}, None])
-            rows = math.ceil(len(figure_data)/2)
-            figure = make_subplots(
-                            rows=rows, cols=2, specs= specs)
-            parse_Points = 0
-            col = 1
-            row = 1
-            while parse_Points < len(figure_data):
-                start = 0
-                plots = figure_data[parse_Points]   
-
-                while start < len(plots):                    
-                    file_name = plots[start][1]
-                    Enzyme_name = plots[start][2]
-                    figure.add_trace(plot.Bar(
-                        name = (file_name + ' - ' + Enzyme_name),
-                        x = plots[start][4]['Variants ID'],
-                        y = plots[start][4]['Percentage']
+                    x = plots[start][4]['Variants ID'],
+                    y = plots[start][4]['Percentage']
                     ), row = row, col=col)
-                    start = start + 1
-                figure.update_xaxes(title_text="Variant ID", row=row, col=col)
-                figure.update_yaxes(title_text="Percentage (%)", row=row, col=col)
+                start = start + 1
+            figure.update_xaxes(title_text="Variant ID", row=row, col=col)
+            figure.update_yaxes(title_text="Percentage (%)", row=row, col=col)
                     
-                
-                if col == 2:
-                    col = 0
-                    row = row + 1
-                col = col + 1
-                parse_Points= parse_Points + 1
+            if col == 2:
+                col = 0
+                row = row + 1
+            col = col + 1
+            parse_Points= parse_Points + 1
         figure.update_layout(title_text="Pharmaco variants found"
                                 )
         return figure
+    
     if Plot_type == 'Scatter':
-        if len(Plot_info) == 1:
+        specs = subPlots_spec(figure_data, True)
+        rows = math.ceil(len(figure_data)/2)
+        figure = make_subplots(
+                    rows=rows, cols=2, specs= specs)
+        parse_Points = 0
+        col = 1
+        row = 1
+        while parse_Points < len(figure_data):
             start = 0
-            while start < len(Plot_info):
-                file_name = Plot_info[start][0]
-                Enzyme_name = Plot_info[start][1]
-                data.append(plot.Scatter(
-                    name = (file_name + ' - ' + Enzyme_name),
-                    x = Plot_info[start][4]['Variants ID'],
-                    y = Plot_info[start][4]['Percentage'],
-                    mode = 'markers'
-                    ))
-                start = start + 1
-            figure = plot.Figure(data = data)
-            figure.update_layout(
-                                barmode = 'group',
-                                title_text = 'Pharmaco variant found',
-                                xaxis = dict(
-                                    title = 'Variant ID',
-                                    titlefont_size=16,
-                                    tickfont_size=14,
-                                    ),
-                                yaxis = dict(
-                                    title ='Percentage (%)',
-                                    titlefont_size=16,
-                                    tickfont_size=14,
-                                    )
-                                )
-        else:
-            domains = []
-            specs = []
-            start = 0
-            while start < len(figure_data):
-                domains.append({})    
-                if len(domains) == 2:        
-                    specs.append(domains)
-                    domains = []
-                start = start + 1
-            if start%2 != 0:
-                specs.append([{'colspan': 2}, None])
-            rows = math.ceil(len(figure_data)/2)
-            figure = make_subplots(
-                            rows=rows, cols=2, specs= specs)
-            parse_Points = 0
-            col = 1
-            row = 1
-            while parse_Points < len(figure_data):
-                start = 0
-                plots = figure_data[parse_Points]   
+            plots = figure_data[parse_Points]   
 
-                while start < len(plots):                    
-                    file_name = plots[start][1]
-                    Enzyme_name = plots[start][2]
-                    figure.add_trace(plot.Scatter(
-                        name = (file_name + ' - ' + Enzyme_name),
-                        x = plots[start][4]['Variants ID'],
-                        y = plots[start][4]['Percentage'],
-                        mode = 'markers'
+            while start < len(plots):                    
+                file_name = plots[start][0]
+                Enzyme_name = plots[start][1]
+                figure.add_trace(plot.Scatter(
+                    name = (file_name + ' - ' + Enzyme_name),
+                    x = plots[start][4]['Variants ID'],
+                    y = plots[start][4]['Percentage'],
+                    mode = 'markers'
                     ), row = row, col=col)
-                    start = start + 1
-                figure.update_xaxes(title_text="Variant ID", row=row, col=col)
-                figure.update_yaxes(title_text="Percentage (%)", row=row, col=col)
+                start = start + 1
+            figure.update_xaxes(title_text="Variant ID", row=row, col=col)
+            figure.update_yaxes(title_text="Percentage (%)", row=row, col=col)
                     
                 
-                if col == 2:
-                    col = 0
-                    row = row + 1
-                col = col + 1
-                parse_Points= parse_Points + 1
+            if col == 2:
+                col = 0
+                row = row + 1
+            col = col + 1
+            parse_Points= parse_Points + 1
         figure.update_layout(title_text="Pharmaco variants found"
                                 )
         return figure
+    
+    if Plot_type != 'Continential':
+        data = variant_Info(figure_data)
+        if Plot_type == 'Orthographic':        
+            figure = plotex.scatter_geo( data_frame= data,
+                    lat =  'Lat',
+                    lon= 'Long',
+                    color = 'Average Variant Percentage(%)',
+                    hover_name = 'Enzyme -' + data['Enzy'] + '<br>' + 'Location - ' + data['loc'] + '<br>' + 'Homogenous variants - '+ data['Homogenous'] + 'Heterogenous variants - '+ data['Heterogenous'],
+                    projection= 'orthographic',
+                    title = 'Globe: Population Geo-location'
+                )
+            figure.update_geos(
+                    showland = True,
+                    showcountries = True,
+                    showocean=True
+                )
+            return figure
 
+        if Plot_type == 'natural_earth':
+            figure = plotex.scatter_geo( data_frame= data,
+                    lat =  'Lat',
+                    lon= 'Long',
+                    color = 'Average Variant Percentage(%)',
+                    hover_name = 'Enzyme -' + data['Enzy'] + '<br>' + 'Location - ' + data['loc'] + '<br>' + 'Homogenous variants - '+ data['Homogenous'] + 'Heterogenous variants - '+ data['Heterogenous'],
+                    projection= 'natural earth',
+                    title = 'Flat View: Population Geo-location' 
+                )
+            figure.update_geos(
+                    showland = True,
+                    landcolor = "rgb(255, 255, 204)",
+                    subunitcolor = "rgb(255, 255, 255)",
+                    countrycolor = "rgb(204, 204, 179)",
+                    showsubunits = True,
+                    showcountries = True,
+                    oceancolor="LightBlue",
+                    showocean=True
+                )
+            return figure
+    else:
+        plot_data = Sort_continents(Plot_info)        
+        rows = math.ceil(len(plot_data)/2)
+        parse_Points = 0
+        col = 2
+        specs = subPlots_spec(plot_data, False)
+        subplot_titles  = []
+        start = 0
+        while start < len(plot_data):
+            continent = plot_data[start]
+            subplot_titles .append(continent[0][2]['Continent'])
+            start = start + 1        
+        figure = make_subplots(
+                rows = rows, cols= col, specs= specs, subplot_titles = subplot_titles 
+            )
+        row = 1
+        col = 1
+        while parse_Points < len(plot_data):
+            plots = plot_data[parse_Points]            
+            scope = plots[0][2]['Continent']
+            data = variant_Info(plots)
+            figure.add_trace(plot.Scattergeo(
+                    lat = data['Lat'],
+                    lon= data['Long'],
+                    mode = 'markers',
+                    marker_color = data['Average Variant Percentage(%)'],
+                    text  = 'Enzyme -' + data['Enzy'] + '<br>' + 'Location - ' + data['loc'] + '<br>' + 'Homogenous variants - '+ data['Homogenous'] + 'Heterogenous variants - '+ data['Heterogenous']
+                ),
+                row = row, col = col
+            )
+            figure.update_geos(dict(
+                    scope = scope,
+                    showland = True,
+                    landcolor = 'rgb(229, 229, 229)',
+                    showcountries = True,
+                    subunitcolor = "rgb(255, 255, 255)",
+                    countrycolor = "rgb(217, 217, 217)",
+                    ),
+                row = row, col = col
+            )
+            if col == 2:
+                col = 0
+                row = row + 1
+            col = col + 1
+            parse_Points= parse_Points + 1
+        figure.update_layout(title_text="Variant data per continent")
+        
+        return figure
+        
 
 # returns [  Sample Size, AlleleInfo index, [Variant heading], [Pharmaco variants contained in VCF file] ]
 def Pharmaco_VariantParse(PharmacoVariants, VCF_Filedetails):

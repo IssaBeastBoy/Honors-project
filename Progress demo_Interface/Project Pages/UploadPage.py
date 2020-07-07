@@ -1,4 +1,3 @@
-import plotly.graph_objects as go 
 import dash
 import io
 import dash_bootstrap_components as dbc 
@@ -138,8 +137,7 @@ South_Asian = html.Div(
                             id = 'SA',
                             options=[
                                 {'label':'Bengali, India - Code: BEB', 'value': '1'},
-                                {'label':'Gujarati, India - Code: GIH', 'value': '2'},
-                                {'label':'Punjabi, Pakistan - Code: PJL', 'value': '3'}
+                                {'label':'Punjabi, Pakistan - Code: PJL', 'value': '2'}
                             ]
                         )
     )
@@ -164,8 +162,7 @@ European =  html.Div(
                                 {'label':'British/Scotish, UK - Code: GBR', 'value': '1'},
                                 {'label':'Finnish, Finland - Code: FIN', 'value': '2'},
                                 {'label':'Lberian, Spain - Code: IBS', 'value': '3'},
-                                {'label':'Toscani, Italy - Code: TSI', 'value': '4'},
-                                {'label':'Yoruba, Nigeria - Code: YRI', 'value': '5'}
+                                {'label':'Toscani, Italy - Code: TSI', 'value': '4'}
                             ]
                         )
     )
@@ -189,7 +186,8 @@ Ancestry = html.Div(
                                 {'label':'Tami (Sri Lankan), UK - Code: STU', 'value': '2'},
                                 {'label':'African, USA - Code: ASW', 'value': '3'},
                                 {'label':'Caribbean, Barbados - Code: ACB', 'value': '4'},
-                                {'label':'Mexican, USA - Code: MXL', 'value': '5'}
+                                {'label':'Gujarati, USA - Code: GIH', 'value': '5'},
+                                {'label':'Mexican, USA - Code: MXL', 'value': '6'}
                             ]
                         )
     )

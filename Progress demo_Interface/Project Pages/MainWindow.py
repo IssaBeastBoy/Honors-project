@@ -2,7 +2,6 @@ import dash
 import dash_bootstrap_components as dbc 
 import dash_core_components as dcc 
 import dash_html_components as html 
-import plotly.graph_objects as plot 
 
 from Methods import Add_CheckBoxMW
 from MW_Topbuttons import SU_button , AV_button, DrugA_button, AlleleInfo_button
@@ -78,36 +77,24 @@ def bottomPart():
                     dbc.Button('Delete', color='danger', id ='Delete_button')])
                     ]),
                 dbc.Row([
-                        html.Center(html.B('Available plots')),
-                        html.Br(),
-                        dcc.RadioItems(
+                        html.Center(html.B('Available plots'))
+                        ]),
+                dbc.Row([
+                            dcc.RadioItems(
                             options=[
                                 {'label':'Bar Graph', 'value': '1'},
                                 {'label':'Scatter Plot', 'value': '2'},
-                                {'label': '...', 'value': '3'}
+                                {'label': 'Orthographic Map', 'value': '3'},
+                                {'label': 'Natural Earth Map', 'value': '4'},
+                                {'label': 'Continential Map', 'value': '5'},
                             ],
                             id = 'Plot_Options',
                             labelStyle={'display': 'block'}
                         )
-                ])
-                 ],
-                    width = 3,
-                    align = 'end')
-        ]),
-        dbc.Row(
-            [
-                dbc.Col(
-                    [
-                        dbc.Button('Population ratio', color='secondary')
-                    ]
-                ),
-                dbc.Col(
-                    [
-                        dbc.Button('Help', color='secondary')
-                    ]
+                        ]
                 )
-            ]
-        )
+            ])  
+        ])
     ]) 
     return BottomPart      
    
