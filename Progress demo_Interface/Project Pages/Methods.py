@@ -12,7 +12,6 @@ import numpy as np
 #from dash_dependencies import Output,Input
 
 
-
 upLoad_requirements = []      
             # [ int(Value) of the uploaded file that are selected at the checkBox ]          
 selected_Files = []
@@ -29,7 +28,7 @@ Coordinates = {
                 'Kibh':{'Lat': 10.6497452, 'Long': 106.7619794, 'Continent': 'asia', 'location':'Ho Chi Minh City, Vietnam'},
                 'Luhya':{'Lat': 0.607628, 'Long': 34.7687756, 'Continent': 'africa', 'location':'Webuye, Kenya'},
                 'Esan':{'Lat': 6.5180735, 'Long': 3.6756969, 'Continent': 'africa', 'location':'Esan, Epe, Nigeria'},
-                'Mende':{'Lat': 8.922137, 'Long': -11.9448022, 'Continent': 'africa', 'location':'Mende, Bombali District, Sierra Leone'},
+                'Menda':{'Lat': 8.922137, 'Long': -11.9448022, 'Continent': 'africa', 'location':'Mende, Bombali District, Sierra Leone'},
                 'Bengali':{'Lat': 24.4768783, 'Long': 90.2932426, 'Continent': 'asia', 'location':'Bangladesh'},
                 'Punjabi':{'Lat': 31.5656079, 'Long': 74.3141775, 'Continent': 'asia', 'location':'Lahore, Pakistan'},
                 'British/Scotish':{'Lat': 54.7023545, 'Long': -3.2765753, 'Continent': 'europe', 'location':'United Kingdom'},
@@ -47,6 +46,9 @@ Coordinates = {
                 'Mexican':{'Lat': 34.0536909, 'Long': -118.2427666, 'Continent': 'north america', 'location':'Los Angeles, CA <br> United States of America'},
                 #'':{'Lat': , 'Long': , 'Continent': '', 'location':''}                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            
             }
+
+store_Selected = []
+                # [[[File Name, EnzymeName, Panda{Coords}, Panda{V_ID:HETERO[], HOMO[]}, Panda{V_ID, Homo[%,Count], HETERO[%,Count]}], [Same_ENZY2]], [ENZY_GROUP2] ]
 
 # returns [ [Variant heading], Sample Size, AlleleInfo index, [file variants] ]
 def VCF_FileParse (Files_contents, fileName):
@@ -140,7 +142,7 @@ def Data_Structure (Input_VCFdata):
                 Hetero_gene.append(None)
             start = start + 1     
         parse =  parse + 1            
-        store_variantInfo = Data_Frame.DataFrame({Pharmaco_Variant[2]:{'Homgeneous Samples': Homo_gene, 'Heterogenous Samples':Hetero_gene}})
+        store_variantInfo = {Pharmaco_Variant[2]:{'Homgeneous Samples': Homo_gene, 'Heterogenous Samples':Hetero_gene}}
         allele_info.append(store_variantInfo)
         start = 0
         while start < len(Hetero_gene):
@@ -186,10 +188,11 @@ def Sort_info(Plot_info, Plot_type):
                     if enzyme == Plot_info[index][1]:
                         Sorted.append(Plot_info[index])                    
                         del Plot_info[index]
+                        index = -1
                     if len(Plot_info) == 0:
                         if len(Sorted) > 0:
                             Sorted_PlotInfo.append(Sorted)
-                        return Sorted_PlotInfo
+                        return Sorted_PlotInfo                    
                     index = index + 1
                 index = 0
                 save_info = []
@@ -310,7 +313,6 @@ def variant_Info(figure_data):
 def Plotly_graph(Plot_info, Plot_type):
     data = []
     figure_data = Sort_info(Plot_info, Plot_type)
- 
     if Plot_type == 'Bar_Graph':
         specs = subPlots_spec(figure_data, True)
         rows = math.ceil(len(figure_data)/2)
@@ -465,7 +467,6 @@ def Plotly_graph(Plot_info, Plot_type):
         
         return figure
         
-
 # returns [  Sample Size, AlleleInfo index, [Variant heading], [Pharmaco variants contained in VCF file] ]
 def Pharmaco_VariantParse(PharmacoVariants, VCF_Filedetails):
     variants = VCF_Filedetails[3]
@@ -523,6 +524,267 @@ def ConvertTuple2List(DatabaseInfo_return):
         store_Data.append(tupleIndex[0])
         start = start + 1
     return store_Data
+
+# returns a shared variants [ {File_Name: {V_ID, {[Homo_Samples], [Hetero_Sample]} }, Enzyme_Name]
+def shared_Variants(Enzyme):
+    start = 0
+    results_SharedV = {}
+    file_Names = []
+    Enzy_Name = Enzyme[1]
+    for key in Enzyme[0]:
+        file_Names.append(key)
+    Sample_info = Enzyme[0]
+    parse = 1
+    variants =[]
+    for key in Sample_info[file_Names[0]]:
+        variants.append(key)
+    store_Sample = []
+    variant_num = 0
+    while variant_num < (len(Sample_info) - 1):
+        parse2 = 0
+        while parse2 < len(variants):
+            if Sample_info[file_Names[parse]].get(variants[parse2]) != None:
+                store_Sample.append((variants[parse2], variant_num))
+                store_Sample.append((variants[parse2], parse))
+            parse2 = parse2 + 1
+        if (parse + 1) == len(Sample_info):
+            variant_num = variant_num + 1            
+            variants =[]   
+            for key in Sample_info[file_Names[variant_num]]:
+                variants.append(key)            
+            parse = variant_num + 1
+        else:       
+            parse = parse + 1
+    parse = 0
+    samples_info = []
+    if store_Sample == []:
+        return ([], Enzy_Name)
+    variants = store_Sample[parse][0]
+    name = file_Names[store_Sample[parse][1]]
+    save = (name, Enzyme[0][name].get(variants))    
+    samples_info.append(save)
+    del store_Sample[parse]
+    while 0 != len(store_Sample):
+        if variants == store_Sample[parse][0]:
+            name = file_Names[store_Sample[parse][1]]
+            save = (name, Enzyme[0][name].get(variants))            
+            samples_info.append(save)
+            del store_Sample[parse]
+            parse = parse - 1
+        parse = parse + 1
+        if len(store_Sample) == parse:
+            parse = 0
+            results_SharedV[variants] = samples_info
+            if len(store_Sample) != 0:
+                samples_info = []
+                variants = store_Sample[parse][0]
+    return [results_SharedV, Enzy_Name]
+
+#Copies list into a new list
+def copyList(List):
+    start = 0
+    copy = []
+    while start < len(List):
+        copy.append(List[start])
+        start = start + 1
+    return copy
+
+# returns unique variants [ {File_Name: {V_ID, {[Homo_Samples], [Hetero_Sample]} }, Enzyme_Name]
+def unique_Variants(Enzyme):
+    Enzyme = copyList(Enzyme)
+    start = 0
+    results_SharedV = {}
+    file_Names = []
+    Enzy_Name = Enzyme[1]
+    for key in Enzyme[0]:
+        file_Names.append(key)
+    Sample_info = Enzyme[0]
+    parse = 0
+    store_Sample = []
+    while parse < len(Sample_info):
+        variants =[]   
+        for key in Sample_info[file_Names[parse]]:
+            variants.append(key)
+        parse2 = 0
+        while parse2 < len(variants):
+            store_Sample.append((variants[parse2], parse))
+            parse2 = parse2 + 1         
+        parse = parse + 1
+    parse = 0
+    samples_info = []
+    variants = store_Sample[parse][0]
+    store_Sample = copyList(store_Sample)
+    name = file_Names[store_Sample[parse][1]]
+    save = (name, Enzyme[0][name].get(variants))
+    duplic_Variant = False
+    del store_Sample[parse]
+    while 0 != len(store_Sample):
+        if variants == store_Sample[parse][0]:
+            duplic_Variant = True
+            store_Sample = copyList(store_Sample)
+            del store_Sample[parse]
+        parse = parse + 1
+        if len(store_Sample) == parse:
+            if not duplic_Variant:
+                samples_info.append(save)
+                results_SharedV[variants] = samples_info
+                samples_info = []
+
+            duplic_Variant = False
+            parse = 0           
+            
+            if len(store_Sample) != 0:
+                variants = store_Sample[parse][0]
+                name = file_Names[store_Sample[parse][1]]
+                save = (name, Enzyme[0][name].get(variants))
+                store_Sample = copyList(store_Sample)
+                del store_Sample[0] 
+                if len(store_Sample) == 0:
+                    samples_info.append(save)
+                    results_SharedV[variants] = samples_info
+
+    return [results_SharedV, Enzy_Name]
+
+# returns a [File_Name :{V_ID, {[Homo_Samples], [Hetero_Sample]} }, Enzyme_Name]
+def found_Variants(Enzy_info):  
+    start = 0 
+    store_information = {}
+    enzyme = Enzy_info[0][1]
+    while start < len(Enzy_info):
+        variants = []
+        info = Enzy_info[start]
+        name = info[0]
+        info_percentage = info[4]['Percentage']
+        parse = 0
+        while parse < len(info_percentage):
+            if info_percentage[parse] > 0:
+                variants.append(Enzy_info[start][4]['Variants ID'][parse])                
+            parse = parse + 1
+        parse = 0
+        samples = []
+        samples_info = []
+        while parse < len(info[3]):
+            samples_info.append(info[3][parse])
+            parse = parse + 1
+        parse = 0        
+        store_Variants = {}
+        while parse < len(variants):
+            parse2 = 0                        
+            while parse2 < len(samples_info):
+                if samples_info[parse2].get(variants[parse]) != None:
+                    store_Variants.update(samples_info[parse2])
+                    del samples_info[parse2]
+                    break
+                parse2 = parse2 + 1
+            parse = parse + 1              
+        store_information[name] = store_Variants 
+        start = start + 1
+    results = [store_information, enzyme]
+    return results
+
+# returns a string format of the sample data
+def Samples_format(samples_Data):
+    store_String = ''
+    samples = []
+    start = 0
+    while start < len(samples_Data):
+        store_String = store_String + samples_Data[start][0] + ':                                                  \n'
+        samples = []
+        for key in samples_Data[start][1]:
+            samples.append(key)
+        parse2 = 0
+        while parse2 < len(samples):
+            sampleName = samples_Data[start][1].get(samples[parse2])
+            store_String = store_String + '\t' + samples[parse2] + ' - '       
+            if sampleName == []:
+                store_String = store_String + ' None ' + '\n'
+            else:
+                parse3 = 0
+                while parse3 < len(sampleName):
+                    store_String = store_String + ' ' + sampleName[parse3]
+                    parse3 = parse3 + 1
+                store_String = store_String + '\n'
+            parse2 = parse2 + 1
+        start = start + 1
+    return store_String
+
+# returns the html layout for the shared and unique varients table
+def setting_VariantInfo(booleanSU, booleanD, variants_Data, Database):
+    if not booleanD:
+        layout = []
+        start = 0
+        while start < len(variants_Data) :
+            if booleanSU:
+                boolSU = False
+            else:
+                boolSU = True
+            enzyme_Info = variants_Data[start]
+            if len(enzyme_Info) > 1:
+                rows = []
+                Variants_found = found_Variants(enzyme_Info)
+                if len(Variants_found[0]) > 0:
+                    if booleanSU:
+                        shared = shared_Variants(Variants_found)
+                        info_string = ' shared '
+                        header_string = ' Shared '
+                    else: 
+                        shared = unique_Variants(Variants_found)
+                        info_string = ' unique '
+                        header_string = ' Unique '
+                    if len(shared[0]) > 0:
+                        variants = []
+                        for key in shared[0]:
+                            variants.append(key)
+                        dataBase_extraction = get_EnzymeInfo(Database, shared[1])
+                        parse = 0
+                        table_Rows = []
+                        while parse < len(variants):
+                            ID = variants[parse]
+                            info = 0
+                            while info < len(dataBase_extraction):
+                                if ID == dataBase_extraction[info][1]:
+                                    name = dataBase_extraction[info][2]
+                                    position = dataBase_extraction[info][3]
+                                    effect = dataBase_extraction[info][4]
+                                    del dataBase_extraction[info]
+                                    break
+                                info = info + 1
+                            samples_Data = Samples_format(shared[0].get(variants[parse]))
+                            Table_row = html.Tr([html.Td(ID), html.Td(name), html.Td(position), html.Td(effect), html.Td(samples_Data)]) 
+                            rows.append(Table_row)
+                            parse = parse + 1
+                        table_headers = [
+                            html.Thead(
+                            html.Tr(
+                            [
+                                html.Th('Variant ID'), html.Th('Variant Name'), html.Th('Position'), html.Th('Effect'), html.Th('Samples with variants')
+                            ]))
+                        ]
+                        heading = html.H5(shared[1] + ' - '+ header_string + ' variants in the selected files') 
+                        tabel = dbc.Table(table_headers + rows,bordered = True, dark = boolSU, responsive = True)
+                        layout.append(heading)
+                        layout.append(tabel)
+                    else:
+                        heading = html.H5(shared[1] + ' - No'+ info_string +'variants in the selected files')
+                        layout.append(heading)
+                else:
+                    heading = html.H5(Variants_found[1] + ' - No Pharmaco Variants found in the selected files')
+                    layout.append(heading)
+            else:
+                layout = html.Div( 
+                    html.H6("Single file selected")
+                    )
+                return layout
+            start = start + 1
+        return layout     
+    
+# returns selected enzyme(s) details from database
+def get_EnzymeInfo(Database, Selected_enzyme):
+    Database_Info = Database.cursor()
+    enzymeName = Selected_enzyme.lower()
+    Database_Info.execute('SELECT * FROM ' + enzymeName)
+    enzyme_variantInfo =  Database_Info.fetchall()
+    return enzyme_variantInfo
 
 # return the variants from database of the selected CYP enzyme from database
 def get_EnzymeVariants(Database, Selected_enzyme):

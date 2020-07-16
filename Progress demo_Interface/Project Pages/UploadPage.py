@@ -255,26 +255,16 @@ def Upload():
                     [
                     enzymeFamily,
                     html.Div(id='output_Enzy'),
-                    html.Div(id='outputCYP1', style={'display': 'none'}),
-                    html.Div(id='outputCYP2', style={'display': 'none'}),
-                    html.Div(id='outputCYP3', style={'display': 'none'})
                     ]),
                 dbc.Col([
                     populationGroups,
-                    html.Div(id='output_pop'),
-                    html.Div(id='output_AM', style={'display': 'none'}),
-                    html.Div(id='output_AF', style={'display': 'none'}),
-                    html.Div(id='output_EU', style={'display': 'none'}),
-                    html.Div(id='output_NA', style={'display': 'none'}),
-                    html.Div(id='output_SA', style={'display': 'none'}),
-                    html.Div(id='output_EA', style={'display': 'none'}),
-                    html.Div(id='output_AN', style={'display': 'none'})
+                    html.Div(id='output_pop')
                    
                 ])
             ]),
-            dbc.Row([
-             html.Div(html.Center(button))
-            ])
+            dbc.Row(                
+                [html.Div(id='Upload_button')]
+            )
         ]
     )
     return layout

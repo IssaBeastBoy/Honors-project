@@ -4,14 +4,13 @@ import dash
 import dash_bootstrap_components as dbc 
 import dash_core_components as dcc 
 import dash_html_components as html 
-from dash.dependencies import Input, Output, State, ALL, State, Match, ALLSMALLER
+from dash.dependencies import Input, Output, State
 from plotly import graph_objs as plot
 
 from HomePage import Homepage
-from UploadPage import Upload, PharmacoInformation
-from Methods import VCF_FileParse, Coordinates, Plot_points, Add_CheckBoxMW, selected_Files, setting_CheckBOXMW, upLoaded_Details, Pharmaco_VariantParse, get_EnzymeVariants, Plotly_graph
+from UploadPage import Upload, PharmacoInformation, button
+from Methods import VCF_FileParse, Coordinates, Plot_points, Add_CheckBoxMW, selected_Files, setting_CheckBOXMW, upLoaded_Details, Pharmaco_VariantParse, get_EnzymeVariants, Plotly_graph, setting_VariantInfo, store_Selected, Sort_info
 from MainWindow import MainWindow, storeOptions
-from MW_Topbuttons import share_Variants, unique_Variants, drug_Affected, SU_button, AV_button, DrugA_button, AlleleInfo_button, AI
 
 Database = mysql.connector.connect(
     host = 'localhost',
@@ -23,8 +22,7 @@ Database = mysql.connector.connect(
             # [ Variant heading, [Pharmaco variants contained in VCF file] ]
 File_details = []
 
-app = dash.Dash(__name__, external_stylesheets=[dbc.themes.UNITED])
-app = dash.Dash(external_stylesheets=[dbc.themes.BOOTSTRAP])
+app = dash.Dash(__name__, external_stylesheets=[dbc.themes.GRID, dbc.themes.BOOTSTRAP])
 #app.css.append_css({'external_url': 'https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css'})
 #app.scripts.append_script({'external_url': 'https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js'})
 #app.scripts.append_script({'external_url':'https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.bundle.min.js'})
@@ -106,269 +104,154 @@ def VCF_processing(contents, filename):
 #Call back for enzyme family dropdown
 @app.callback(
     Output('output_Enzy', 'children'),
-    [Input('enzyme', 'value')]
+    [Input('CYP1', 'value'),
+    Input('CYP2', 'value'),
+    Input('CYP3', 'value')]
 )
 
-def EnzyFamily(value):
-    if (PharmacoInformation[0] == '') and (value is None):
+def EnzyFamily(value1, value2, value3):
+    if value1 is None and value2 is None and value3 is None:
         layout = html.Div(
             html.Center('*Fill in up the field above', style={"color":"rgb(255,0,0)"})
-        )
+        )        
     else:
         layout = html.Div('')
+    if value1 != None:
+        enzy = ['CYP1A1', 'CYP1A2']
+        PharmacoInformation[0]= enzy[int(value1)-1]
+    if value2 != None: 
+        enzy = ['CYP2A6', 'CYP2C8', 'CYP2C9','CYP2C19', 'CYP2D6', 'CYP2E1', 'CYP2F1']
+        PharmacoInformation[0]= enzy[int(value2)-1]
+    if value3 != None: 
+        enzy = ['CYP3A4', 'CYP3A5', 'CYP3A43']
+        PharmacoInformation[0]= enzy[int(value3)-1]
     return layout
 
-#Call back for CYP1 family radio buttons
-@app.callback(
-     Output('outputCYP1', 'children'),
-    [Input('CYP1', 'value')]
-)
-
-def CYP1(value):
-     if value != None:
-        enzy = ['CYP1A1', 'CYP1A2']
-        PharmacoInformation[0]= enzy[int(value)-1]
-
-#Call back for CYP2 family radio buttons
-@app.callback(
-     Output('outputCYP2', 'children'),
-    [Input('CYP2', 'value')]
-) 
-
-def CYP2(value):
-    if value != None: 
-        enzy = ['CYP2A6', 'CYP2C8', 'CYP2C9','CYP2C19', 'CYP2D6', 'CYP2E1', 'CYP2F1']
-        PharmacoInformation[0]= enzy[int(value)-1]
-
-#Call back for CYP3 family radio buttons
-@app.callback(
-     Output('outputCYP3', 'children'),
-    [Input('CYP3', 'value')]
-)
-
-def CYP3(value):
-    if value != None: 
-        enzy = ['CYP3A4', 'CYP3A5', 'CYP3A43']
-        PharmacoInformation[0]= enzy[int(value)-1]
 #Call back for population dropdown
 @app.callback(
     Output('output_pop', 'children'),
-    [Input('population', 'value')]
+    [Input('AF', 'value'),
+    Input('EA', 'value'),
+    Input('SA', 'value'),
+    Input('AM', 'value'),
+    Input('AN', 'value'),
+    Input('EU', 'value'),
+    Input('NA', 'value')
+    ]
 )
 
-def populationGroup(value):
-    if (PharmacoInformation[1] == '') and (value is None):
+def populationGroup(value1, value2, value3, value4, value5, value6, value7):
+    if value1 is None and value2 is None and value3 is None and value4 is None and value5 is None and value6 is None and value7 is None:
         layout = html.Div(
             html.Center('*Fill in up the field above', style={"color":"rgb(255,0,0)"})
         )
     else:
         layout = html.Div('')
-    return layout
-    
-#Call back for African population radio buttons
-@app.callback(
-     Output('output_AF', 'children'),
-    [Input('AF', 'value')]
-)
-
-def AF(value):
-    if value != None: 
+    if value1 != None: 
         popu = ['Esan', 'The Gambia', 'Luhya','Menda', 'Ibadan']
-        PharmacoInformation[1]= popu[int(value)-1]
-
-
-#Call back for East Asia population radio buttons
-@app.callback(
-     Output('output_EA', 'children'),
-    [Input('EA', 'value')]
-)
-
-def EA(value):
-    if value != None: 
+        PharmacoInformation[1]= popu[int(value1)-1]
+    if value2 != None: 
         popu = ['Dai', 'Beijing', 'Tokyo', 'Kibh', 'Han']
-        PharmacoInformation[1]= popu[int(value)-1]
-
-#Call back for South Asia population radio buttons
-@app.callback(
-     Output('output_SA', 'children'),
-    [Input('SA', 'value')]
-)
-
-def SA(value):
-    if value != None: 
+        PharmacoInformation[1]= popu[int(value2)-1]
+    if value3 != None: 
         popu = ['Bengali', 'Punjabi']
-        PharmacoInformation[1]= popu[int(value)-1]
-
-#Call back for American population radio buttons
-@app.callback(
-     Output('output_AM', 'children'),
-    [Input('AM', 'value')]
-)
-
-def AM(value):
-    if value != None: 
+        PharmacoInformation[1]= popu[int(value3)-1]
+    if value4 != None: 
         popu = ['Colombian', 'Peruvian', 'Puerto_Rican']
-        PharmacoInformation[1]= popu[int(value)-1]
-
-#Call back for Ancestry population radio buttons
-@app.callback(
-     Output('output_AN', 'children'),
-    [Input('AN', 'value')]
-)
-
-def AN(value):
-    if value != None: 
+        PharmacoInformation[1]= popu[int(value4)-1]
+    if value5 != None: 
         popu = ['Telugu', 'Tami', 'African', 'Caribbean', 'Gujarati', 'Mexican']
-        PharmacoInformation[1]= popu[int(value)-1]
-
-#Call back for European population radio buttons
-@app.callback(
-     Output('output_EU', 'children'),
-    [Input('EU', 'value')]
-)
-
-def EU(value):
-    if value != None: 
+        PharmacoInformation[1]= popu[int(value5)-1]
+    if value6 != None: 
         popu = ['British/Scotish', 'Finnish', 'Lberian', 'Toscani']
-        PharmacoInformation[1]= popu[int(value)-1]
-
-#Call back for Non Specfic population radio buttons
+        PharmacoInformation[1]= popu[int(value6)-1]
+    if value7 != None: 
+        PharmacoInformation[1]= 'None Specfic'
+    return layout
+     
+#Call back for the uploading details
 @app.callback(
-     Output('output_NA', 'children'),
-    [Input('NA', 'value')]
+    Output('Upload_button', 'children'), 
+    [Input('AF', 'value'),
+    Input('EA', 'value'),
+    Input('SA', 'value'),
+    Input('AM', 'value'),
+    Input('AN', 'value'),
+    Input('EU', 'value'),
+    Input('NA', 'value'),
+    Input('CYP1', 'value'),
+    Input('CYP2', 'value'),
+    Input('CYP3', 'value'),
+    Input('VCF', 'contents')
+    ]
 )
 
-def N_A(value):
-    if value != None: 
-        PharmacoInformation[1]= 'None Specfic'
-        
+def upload_design(value1, value2, value3, value4, value5, value6, value7, value8, value9 , value10, content):
+    if (value1 != None or value2 != None or value3 != None or value4 != None or value5 != None or value6 != None or value7 != None) and (value8 != None or value9 != None or value10 != None) and (content != None):
+        layout = html.Div(
+            [html.Br(),
+            html.Center(),
+            button]
+        )
+        return layout        
+    
+                   
 #Call back for shared variant button
 @app.callback(
-    Output('Info_PlayGround1', 'children'),
-    [Input('SV_button', 'n_clicks')]
+    Output('info_field', 'is_open'),
+    [Input('SV_button', 'n_clicks'),
+     Input('UV_button', 'n_clicks'),
+     Input('DrugA_button', 'n_clicks')],
+    [State("info_field", "is_open")],
 )
 
-def SV_action(n_clicks):
-    if n_clicks is None :
-        layout = html.Div(
-            [
-                SU_button
-            ]
-        )
-    if n_clicks != None :
-        layout = html.Div(
-            [
-                share_Variants
-            ]
-        )
-    return layout
+def Variant_data(svB, uvB, daB, is_open):
+    if (svB != None  or uvB != None or daB != None ):
+        if (svB != None and (svB==1 or svB%2 > 0)):
+            return not is_open
+        elif (uvB != None and (uvB == 1 or uvB%2 > 0)):
+            return not is_open
+        elif (daB != None and (daB == 1 or daB%2 > 0)):
+            return not is_open    
+        else:
+            return not is_open    
+    else:
+        return not is_open
 
-
-#Call back for unique variant button
+#Call back for shared variant button
 @app.callback(
-    Output('Info_PlayGround2', 'children'),
-    [Input('UV_button', 'n_clicks')]
+    Output('Tables', 'children'),
+    [Input('SV_button', 'n_clicks'),
+     Input('UV_button', 'n_clicks'),
+     Input('DrugA_button', 'n_clicks'),
+     Input('CheckBox_File','value')]
 )
 
-def UV_action(n_clicks):
-    if n_clicks is None :
+def set_Table(svB, uvB, daB, file_select):
+    if (svB != None  or uvB != None or daB != None ) and file_select != None:
+        start = 0
+        if (svB != None and (svB==1 or svB%2 > 0)):
+            ordered_Files = Sort_info(Plot_points(upLoaded_Details, selected_Files), 'Bar_Graph')  
+            layout = html.Div(
+                style = {'white-space': 'pre-wrap'} ,
+                children = setting_VariantInfo(True, False, ordered_Files, Database)
+                )
+            return layout
+        if (uvB != None and (uvB == 1 or uvB%2 > 0)):
+            ordered_Files = Sort_info(Plot_points(upLoaded_Details, selected_Files), 'Bar_Graph')  
+            layout = html.Div(
+                style = {'white-space': 'pre-wrap'} ,
+                children = setting_VariantInfo(False, False, ordered_Files, Database)
+                )
+            return layout        
+    else:
         layout = html.Div(
-            [
-                AV_button
-            ]
+            html.H6("No file select")
         )
-    if n_clicks != None :
-        layout = html.Div(
-            [
-                unique_Variants
-            ]
-        )
-    return layout
-
-#Call back for affected drugs button
-@app.callback(
-    Output('Info_PlayGround3', 'children'),
-    [Input('DrugA_button', 'n_clicks')]
-)
-
-def DrugA_action(n_clicks):
-    if n_clicks is None :
-        layout = html.Div(
-            [
-                DrugA_button
-            ]
-        )
-    if n_clicks >= 1 :
-        layout = html.Div(
-            [
-                drug_Affected
-            ]
-        )
-    return layout
-
-#Call back for  closin shared variant dropdown
-@app.callback(
-    Output('Share_Vinfo', 'children'),
-    [Input('Back_ToSVB', 'n_clicks')]
-)
-
-def SV_close(n_clicks):
-    if n_clicks is None :
-        layout = html.Div(
-            [
-                share_Variants
-            ]
-        )
-    if n_clicks != None:
-        layout = html.Div(
-            [
-                SU_button                
-            ]
-        )
-    return layout
-
-#Call back for closing unique variant dropdown
-@app.callback(
-    Output('Unique', 'children'),
-    [Input('Back_ToUVB', 'n_clicks')]
-)
-
-def UV_close(n_clicks):
-    if n_clicks is None :
-        layout = html.Div(
-            [
-                unique_Variants
-            ]
-        )
-    if n_clicks != None :
-        layout = html.Div(
-            [
-                AV_button                
-            ]
-        )
-    return layout
-
-#Call back for  closing affected drugs dropdown
-@app.callback(
-    Output('Drug_A', 'children'),
-    [Input('Back_ToDrugAB', 'n_clicks')]
-)
-
-def DrugA_close(n_clicks):
-    if n_clicks is None :
-        layout = html.Div(
-            [
-                drug_Affected
-            ]
-        )
-    if n_clicks != None:
-        layout = html.Div(
-            [
-                DrugA_button                
-            ]
-        )
-    return layout
-
+        return layout
+   
+        
+    
 #Call back for main window check box files
 @app.callback(
     Output('CheckBox', 'children'),
@@ -388,31 +271,33 @@ def ticked_Files(value):
 #Call back for drawing plot
 @app.callback(
     Output('Plot', 'children'),
-    [Input('Plot_Options', 'value')]
+    [Input('Plot_Options', 'value'),
+    Input('CheckBox_File','value')]
 )
 
-def Figure(value):
+def Figure(radio, check):
     avialable_Plot = ['Bar_Graph', 'Scatter', 'Orthographic', 'natural_earth', 'Continential']    
-    if value is None:
-        if len(selected_Files) == 0:
-            layout = html.Div(
+    if radio is None and check is None:
+        layout = html.Div(
                 html.H4(
                     html.Center('Select file \n and \n plot type')
                 )
             )
-        else:
-            layout = html.Div(
-                html.H4(html.Center('Select plot type'))
+    elif radio is None:
+        layout = html.Div(
+                html.H4(html.Center('Select plot type from available plots'))
+            )
+    elif check is None:
+        layout = html.Div(
+                html.H4(html.Center('Select file from loaded files'))
             )
     else:
-        if len(selected_Files) == 0:
+        if len(check) == 0:
             layout = html.Div(
-                html.H4(
-                    html.Center('Select .vcf file \n')
-                )
+                html.H4(html.Center('Select file from loaded files'))
             )
         else:
-            figure = Plotly_graph(Plot_points(upLoaded_Details, selected_Files), avialable_Plot[int(value)-1])
+            figure = Plotly_graph(Plot_points(upLoaded_Details, selected_Files), avialable_Plot[int(radio)-1])
             layout = html.Div(
                     dcc.Graph(figure = figure)
                 )
@@ -443,48 +328,6 @@ def deleteFile_action(n_clicks):
             start = start + 1
         option = Add_CheckBoxMW(storeOptions)
         layout = setting_CheckBOXMW(option)
-    return layout
-
-#Call back for allele present button
-@app.callback(
-    Output('Info_PlayGround4', 'children'),
-    [Input('AI_button', 'n_clicks')]
-)
-
-def Allele_action(n_clicks):
-    if n_clicks is None :
-        layout = html.Div(
-            [
-                AlleleInfo_button
-            ]
-        )
-    if n_clicks != None :
-        layout = html.Div(
-            [
-                AI
-            ]
-        )
-    return layout
-
-#Call back for  closing the allele information dropdown
-@app.callback(
-    Output('AI', 'children'),
-    [Input('Back_ToAIB', 'n_clicks')]
-)
-
-def Alleleinfo_close(n_clicks):
-    if n_clicks is None :
-        layout = html.Div(
-            [
-                AI
-            ]
-        )
-    if n_clicks >= 1 :
-        layout = html.Div(
-            [
-                AlleleInfo_button                
-            ]
-        )
     return layout
 
 if __name__ == '__main__':
