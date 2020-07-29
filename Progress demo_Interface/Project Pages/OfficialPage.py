@@ -9,7 +9,7 @@ from plotly import graph_objs as plot
 
 from HomePage import Homepage
 from UploadPage import Upload, PharmacoInformation, button
-from Methods import VCF_FileParse, Coordinates, Plot_points, Add_CheckBoxMW, selected_Files, setting_CheckBOXMW, upLoaded_Details, Pharmaco_VariantParse, get_EnzymeVariants, Plotly_graph, setting_VariantInfo, store_Selected, Sort_info
+from Methods import VCF_FileParse, Coordinates, Plot_points, drugs_Affected, Add_CheckBoxMW, selected_Files, setting_CheckBOXMW, upLoaded_Details, Pharmaco_VariantParse, get_EnzymeVariants, Plotly_graph, setting_VariantInfo, store_Selected, Sort_info, AD_dropdown
 from MainWindow import MainWindow, storeOptions
 
 Database = mysql.connector.connect(
@@ -20,7 +20,12 @@ Database = mysql.connector.connect(
     )
 
             # [ Variant heading, [Pharmaco variants contained in VCF file] ]
+
 File_details = []
+#Ensure the correct table is displayed which top mainwindow is clicked
+Control_button = [True, True, True]
+#Corrects the table downdrop in the main window
+Control_downdrop = [True, True, True]
 
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.GRID, dbc.themes.BOOTSTRAP])
 #app.css.append_css({'external_url': 'https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css'})
@@ -194,9 +199,8 @@ def upload_design(value1, value2, value3, value4, value5, value6, value7, value8
             button]
         )
         return layout        
-    
-                   
-#Call back for shared variant button
+
+#Call back for shared variants button
 @app.callback(
     Output('info_field', 'is_open'),
     [Input('SV_button', 'n_clicks'),
@@ -206,19 +210,85 @@ def upload_design(value1, value2, value3, value4, value5, value6, value7, value8
 )
 
 def Variant_data(svB, uvB, daB, is_open):
-    if (svB != None  or uvB != None or daB != None ):
-        if (svB != None and (svB==1 or svB%2 > 0)):
+    if (svB != None and (svB%2 > 0 and Control_downdrop[0])): 
+        if (is_open == None or is_open == False):
+            Control_downdrop[0] = False
             return not is_open
-        elif (uvB != None and (uvB == 1 or uvB%2 > 0)):
+        else:            
+            return is_open 
+    elif (uvB != None and (uvB%2 > 0 and Control_downdrop[1])):
+        if (is_open == None or is_open == False):
+            Control_downdrop[1] = False
             return not is_open
-        elif (daB != None and (daB == 1 or daB%2 > 0)):
-            return not is_open    
         else:
-            return not is_open    
+            return is_open 
+    elif(daB != None and (daB%2 > 0 and Control_downdrop[2])):
+        if (is_open == None or is_open == False):
+            Control_downdrop[2] = False
+            return not is_open
+        else:
+            return is_open 
     else:
-        return not is_open
+        if is_open == True:
+            Control_downdrop[0] = True
+            Control_downdrop[1] = True
+            Control_downdrop[2] = True
+            return not is_open
 
-#Call back for shared variant button
+#Call back for displaying drug anticoagulation table
+@app.callback(
+    Output('anticoagulation', 'children'),
+    [
+        Input('Antico', 'n_clicks')
+    ]
+)
+
+def anticoagulation(clicks):
+    if clicks != None and clicks%2 > 0:
+        ordered_Files = Sort_info(Plot_points(upLoaded_Details, selected_Files), 'Bar_Graph') 
+        return drugs_Affected(ordered_Files, 'Anticoagulation', Database)
+
+#Call back for displaying drug antidepressants table
+@app.callback(
+    Output('antidepressants', 'children'),
+    [
+        Input('Antide', 'n_clicks')
+    ]
+)
+
+def antidepressants(clicks):
+    if clicks != None and clicks%2 > 0:
+        ordered_Files = Sort_info(Plot_points(upLoaded_Details, selected_Files), 'Bar_Graph') 
+        return drugs_Affected(ordered_Files, 'Antidepressants', Database)
+
+#Call back for displaying drug antifungals table
+@app.callback(
+    Output('antifungals', 'children'),
+    [
+        Input('Antifu', 'n_clicks')
+    ]
+)
+
+def antifungals(clicks):
+    if clicks != None and clicks%2 > 0:
+        ordered_Files = Sort_info(Plot_points(upLoaded_Details, selected_Files), 'Bar_Graph') 
+        return drugs_Affected(ordered_Files, 'Antifungals', Database)
+
+#Call back for displaying drug antipsychotics table
+@app.callback(
+    Output('antipsychotics', 'children'),
+    [
+        Input('Antips', 'n_clicks'),
+        Input('DropDown', 'n_clicks')
+    ]
+)
+
+def antipsychotics(clicks, clicks2):
+    if clicks != None and clicks%2 > 0:
+        ordered_Files = Sort_info(Plot_points(upLoaded_Details, selected_Files), 'Bar_Graph') 
+        return drugs_Affected(ordered_Files, 'Antipsychotics', Database)
+
+#Call back for displaying table
 @app.callback(
     Output('Tables', 'children'),
     [Input('SV_button', 'n_clicks'),
@@ -229,21 +299,36 @@ def Variant_data(svB, uvB, daB, is_open):
 
 def set_Table(svB, uvB, daB, file_select):
     if (svB != None  or uvB != None or daB != None ) and file_select != None:
-        start = 0
-        if (svB != None and (svB==1 or svB%2 > 0)):
+        if (svB != None and ((svB == 1 and Control_button[0]) or (Control_button[0] and svB%2 > 0))):
             ordered_Files = Sort_info(Plot_points(upLoaded_Details, selected_Files), 'Bar_Graph')  
             layout = html.Div(
                 style = {'white-space': 'pre-wrap'} ,
                 children = setting_VariantInfo(True, False, ordered_Files, Database)
                 )
+            Control_button[0] = False if Control_button[0] == True else True 
             return layout
-        if (uvB != None and (uvB == 1 or uvB%2 > 0)):
+        if (uvB != None and ((uvB == 1 and Control_button[1]) or (Control_button[1] and uvB%2 > 0))):
             ordered_Files = Sort_info(Plot_points(upLoaded_Details, selected_Files), 'Bar_Graph')  
             layout = html.Div(
                 style = {'white-space': 'pre-wrap'} ,
                 children = setting_VariantInfo(False, False, ordered_Files, Database)
                 )
-            return layout        
+            Control_button[1] = False if Control_button[1] == True else True
+            return layout   
+        if (daB != None and ((daB == 1 and Control_button[2]) or (Control_button[2] and daB%2 > 0))):
+            return AD_dropdown()
+        if (svB != None and svB%2 == 0):
+            Control_button[0] = True if Control_button[0] == False else False
+            layout = html.Div('')
+            return layout 
+        if (uvB != None and uvB%2 == 0):
+            Control_button[1] = True if Control_button[1] == False else False
+            layout = html.Div('')
+            return layout 
+        if (daB != None and daB%2 == 0):
+            Control_button[2] = True if Control_button[2] == False else False
+            layout = html.Div('')
+            return layout     
     else:
         layout = html.Div(
             html.H6("No file select")

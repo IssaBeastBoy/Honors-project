@@ -45,13 +45,13 @@ def MainWindow():
                                 )
                 )], width=9
                 )
-            , 
+              , 
                 dbc.Col([
                     dbc.Row([
-                            html.Div(id = 'Delete_buttonSpace'),
+                             html.Div(id = 'Delete_buttonSpace'),
                             html.Div(id = 'CheckBox', style={'display': 'none'})
                         ])                
-            ,
+              ,
                     dbc.Row([
                         dbc.Col(
                             dbc.Nav(

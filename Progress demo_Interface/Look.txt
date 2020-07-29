@@ -1,0 +1,30 @@
+[(1, 'rs1799853', 'CYP2CP*2', 'T>A- chr10:95058349 ', 'Reduced enzyme activity'), 
+(2, 'rs1057910', 'CYP2C9*3', 'A>C / A>G - chr10:94981296', 'Reduced enzyme activity'), 
+(3, 'rs56165452', 'CYP2C9*4', 'T>A / T>C - chr10:94981297', 'Possible reduced activity'), 
+(4, 'rs28371686', 'CYP2C9*5', 'C>A / C>G - chr10:94981301', 'Possible reduced activity'), 
+(5, 'rs9332131', 'CYP2C9*6', 'chr10:94949282-94949283', 'Deletion'), 
+(6, 'rs7900194','CYP2C9*8', 'G>A / G>C / G>T - chr10:94942309', 'Possible reduced activity'), 
+(7, 'rs28371685', 'CYP2C9*11', 'C>T - chr10:94981224', 'Possible reduced activity'), 
+(8, 'rs9332239', 'CYP2C9*12', 'C>T - chr10:94989020', 'Possible reduced activity'), 
+(9, 'rs72558187', 'CYP2C9*13', 'T>C - chr10:94941958', 'Possible reduced activity'), 
+(10, 'rs72558190', 'CYP2C9*15', 'C>A / C>T - chr10:94947782', 'None function'), 
+(11, 'rs1304490498', 'CYP2C9*25', 'chr10:94942206-94942222 ', 'Deletion')]
+
+-> Sorted into enzymes
+['SouthHan, China(CHS) -  CYP2C9.vcf', 'CYP2C9',
+  {'rs1799853': {'Homgeneous Samples': [], 'Heterogenous Samples': ['HG00581']}}, 
+  {'rs1057910': {'Homgeneous Samples': ['HG00419'], 'Heterogenous Samples': ['HG00421', 'HG00457', 'HG00472', 'HG00530', 'HG00543', 'HG00607', 'HG00610', 'HG00653']}}, 
+   
+['Mende, Sierra Leone (MSL) - CYP2C9.vcf', 'CYP2C9',
+  {'rs7900194': {'Homgeneous Samples': [], 'Heterogenous Samples': ['HG03079', 'HG03388', 'HG03445', 'HG03458', 'HG03578', 'HG03583']}},
+  {'rs28371685': {'Homgeneous Samples': [], 'Heterogenous Samples': ['HG03391', 'HG03547', 'HG03556', 'HG03577']}}, 
+  {'rs28371686': {'Homgeneous Samples': [], 'Heterogenous Samples': ['HG03088']}}, 
+  
+['Gambain, The Gambia (GWD)  -  CYP2C9.vcf', 'CYP2C9', [{'rs72558187': {'Homgeneous Samples': [], 'Heterogenous Samples': []}}, 
+  {'rs1799853': {'Homgeneous Samples': [], 'Heterogenous Samples': ['HG02769']}}, 
+  {'rs7900194': {'Homgeneous Samples': [], 'Heterogenous Samples': ['HG02643', 'HG02716', 'HG02814', 'HG03538']}}, 
+  {'rs9332131': {'Homgeneous Samples': [], 'Heterogenous Samples': ['HG02628', 'HG02757']}}, 
+  {'rs28371685': {'Homgeneous Samples': [], 'Heterogenous Samples': ['HG02465', 'HG02562', 'HG02583', 'HG02629', 'HG02715', 'HG02820', 'HG02852', 'HG02861']}}, 
+  {'rs28371686': {'Homgeneous Samples': [], 'Heterogenous Samples': ['HG02465', 'HG02610']}}, 
+  
+

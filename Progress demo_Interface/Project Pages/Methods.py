@@ -9,6 +9,10 @@ import dash_html_components as html
 import dash_core_components as dcc 
 import pandas as Data_Frame
 import numpy as np 
+import os
+from os.path import join, isfile
+from os import listdir
+from PIL import Image 
 #from dash_dependencies import Output,Input
 
 
@@ -527,6 +531,7 @@ def ConvertTuple2List(DatabaseInfo_return):
 
 # returns a shared variants [ {File_Name: {V_ID, {[Homo_Samples], [Hetero_Sample]} }, Enzyme_Name]
 def shared_Variants(Enzyme):
+    Enzyme = copyList(Enzyme)
     start = 0
     results_SharedV = {}
     file_Names = []
@@ -555,10 +560,22 @@ def shared_Variants(Enzyme):
             parse = variant_num + 1
         else:       
             parse = parse + 1
-    parse = 0
     samples_info = []
     if store_Sample == []:
         return ([], Enzy_Name)
+    File_info = store_Sample[0]
+    parse = 1
+    nextVariant = 0
+    while nextVariant < len(store_Sample) - 1:              
+        if File_info == store_Sample[parse]:
+            del store_Sample[parse]
+            parse = parse - 1
+        parse = parse + 1
+        if parse == len(store_Sample):
+            nextVariant = nextVariant + 1
+            File_info = store_Sample[nextVariant]
+            parse = nextVariant + 1
+    parse = 0
     variants = store_Sample[parse][0]
     name = file_Names[store_Sample[parse][1]]
     save = (name, Enzyme[0][name].get(variants))    
@@ -611,7 +628,7 @@ def unique_Variants(Enzyme):
             parse2 = parse2 + 1         
         parse = parse + 1
     parse = 0
-    samples_info = []
+    samples_info = []    
     variants = store_Sample[parse][0]
     store_Sample = copyList(store_Sample)
     name = file_Names[store_Sample[parse][1]]
@@ -624,7 +641,7 @@ def unique_Variants(Enzyme):
             store_Sample = copyList(store_Sample)
             del store_Sample[parse]
         parse = parse + 1
-        if len(store_Sample) == parse:
+        if parse >= len(store_Sample):
             if not duplic_Variant:
                 samples_info.append(save)
                 results_SharedV[variants] = samples_info
@@ -642,7 +659,6 @@ def unique_Variants(Enzyme):
                 if len(store_Sample) == 0:
                     samples_info.append(save)
                     results_SharedV[variants] = samples_info
-
     return [results_SharedV, Enzy_Name]
 
 # returns a [File_Name :{V_ID, {[Homo_Samples], [Hetero_Sample]} }, Enzyme_Name]
@@ -735,7 +751,7 @@ def setting_VariantInfo(booleanSU, booleanD, variants_Data, Database):
                         variants = []
                         for key in shared[0]:
                             variants.append(key)
-                        dataBase_extraction = get_EnzymeInfo(Database, shared[1])
+                        dataBase_extraction = get_TableInfo(Database, shared[1])
                         parse = 0
                         table_Rows = []
                         while parse < len(variants):
@@ -778,13 +794,97 @@ def setting_VariantInfo(booleanSU, booleanD, variants_Data, Database):
             start = start + 1
         return layout     
     
-# returns selected enzyme(s) details from database
-def get_EnzymeInfo(Database, Selected_enzyme):
+#Layout for drugs affected Dropdown
+def AD_dropdown():
+    layout = html.Div(
+        [
+            html.Div([dbc.DropdownMenu([dbc.DropdownMenuItem(id = 'anticoagulation')],label="Anticoagulation Drugs")], id="Antico"),
+            html.Div([dbc.DropdownMenu( [dbc.DropdownMenuItem(id = 'antidepressants')], label="Antidepressants Drugs")], id="Antide"),
+            html.Div([dbc.DropdownMenu([dbc.DropdownMenuItem(id = 'antifungals')], label="Antifungals Drugs")], id="Antifu"),
+            html.Div([dbc.DropdownMenu( [dbc.DropdownMenuItem(id = 'antipsychotics')], label="Antipsychotics Drugs")], id="Antips"),
+            html.Div([dbc.DropdownMenu(label="Antiretroviral Drugs", children = [dbc.DropdownMenuItem(id = 'antiretroviral')])], id="Antire"),
+            html.Div([dbc.DropdownMenu(label="Antitumor Drugs", children = [dbc.DropdownMenuItem(id = 'antitumor')])], id="Antitu"),
+            html.Div([dbc.DropdownMenu(label="Beta-Blockers Drugs", children = [dbc.DropdownMenuItem(id = 'beta-blockers')])], id="Bet"),
+            html.Div([dbc.DropdownMenu(label='Immunosuppressive Drugs', children = [dbc.DropdownMenuItem(id = 'immunosuppressive')])], id="Immu"),
+            html.Div([dbc.DropdownMenu(label="Miscellaneous Drugs", children = [dbc.DropdownMenuItem(id = 'Miscellaneous')])], id="Mis"),
+            html.Div([dbc.DropdownMenu(label="NSAIDS Drugs", children = [dbc.DropdownMenuItem(id = 'NSAIDS')])], id="NSAI"),
+            html.Div([dbc.DropdownMenu(label="Opioids Drugs", children = [dbc.DropdownMenuItem(id = 'opioids')])], id="Opio"),
+            #dbc.DropdownMenu(label="Drugs", children = [dbc.DropdownMenuItem(id = 'Drugs')], id="Dru")
+        ]
+    )
+    return layout
+
+# returns the table of drugs which are proccessed by the enzyme in question
+def drugs_Affected(enzymes, selected_Drug, Database):
+    start = 0
+    table_color = False
+    path = os.getcwd()      
+    store_items = []
+    path = path + '\\Drugs\\' + selected_Drug
+    while start < len(enzymes):
+        enzymeName = enzymes[start][0][1]
+        drugs_detail = get_TableInfo(Database, selected_Drug)
+        parse = 0
+        drugName = selected_Drug.lower() 
+        tableNames = html.Div(html.H6(enzymeName + " metabolized " + selected_Drug))
+        store_items.append(tableNames)
+        header = [html.Thead(html.Tr([html.Th("Drug Name"), html.Th("Function"), html.Th("Structure"), html.Th("Metabolite(s)")]))]
+        Table_rows = []
+        while parse < len(drugs_detail):
+            affected = False
+            drug_Type = drugs_detail[parse]
+            involved_Enzy = drug_Type[2]
+            Enzy_list = involved_Enzy.split(',')
+            find_Enzy = 0
+            while find_Enzy < len(Enzy_list):
+                if enzymeName == Enzy_list[find_Enzy].strip():
+                    structure_Path = path + '\\' + drug_Type[1]
+                    structure_List = [
+                        join( structure_Path, fn )                    
+                        for fn in listdir(structure_Path)           
+                        if isfile( join( structure_Path, fn ) ) and fn.lower().endswith(('.png','.jpg'))
+                       ]
+                    metabolite_Path = structure_Path + '\\' + 'Metabolite(s)'
+                    metabolite_List = [ 
+                        join( metabolite_Path, fn )                    
+                        for fn in listdir(metabolite_Path)           
+                        if isfile( join( metabolite_Path, fn ) ) and fn.lower().endswith(('.png','.jpg')) and fn.startswith(enzymeName)
+                        ]                          
+                    affected = True
+                    break
+                find_Enzy = find_Enzy + 1
+            if affected:
+                parse2 = 0
+                store_metabolite = []
+                while parse2 < len(metabolite_List):
+                    metabolite = Image.open(metabolite_List[parse2])
+                    store_metabolite.append(html.Img(src = metabolite))
+                    store_metabolite.append(html.Br())
+                    parse2 = parse2 + 1
+                structure = Image.open(structure_List[0])
+                row = html.Tr([html.Td(drug_Type[1]), html.Td(drug_Type[3]), html.Td(html.Img(src = structure)), html.Td(html.Div(store_metabolite))])
+                Table_rows.append(row)
+            parse = parse + 1
+        if len(Table_rows) > 0:
+            table_body = [html.Tbody(Table_rows)]
+            store_items.append(dbc.Table(header + table_body, bordered=True, dark=table_color))
+            if table_color:
+                table_color = False
+            else:
+                table_color = True
+        else:
+            store_items.append(html.Div('Enzyme does not participate in metabolizing any drug in selected category'))
+        start = start + 1   
+    layout = html.Div(children = store_items, style={"width":"40%"})
+    return layout
+
+# returns selected table(s) details from database 
+def get_TableInfo(Database, Table_name):
     Database_Info = Database.cursor()
-    enzymeName = Selected_enzyme.lower()
-    Database_Info.execute('SELECT * FROM ' + enzymeName)
-    enzyme_variantInfo =  Database_Info.fetchall()
-    return enzyme_variantInfo
+    tableName = Table_name.lower()
+    Database_Info.execute('SELECT * FROM ' + tableName)
+    tabel_contents =  Database_Info.fetchall()
+    return tabel_contents
 
 # return the variants from database of the selected CYP enzyme from database
 def get_EnzymeVariants(Database, Selected_enzyme):
