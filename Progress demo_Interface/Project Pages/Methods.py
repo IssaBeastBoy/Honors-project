@@ -1,6 +1,7 @@
 from plotly import graph_objs as plot
 from plotly.subplots import make_subplots
 from plotly import express as plotex
+import mysql.connector
 import math
 import dash
 import io
@@ -16,10 +17,8 @@ from PIL import Image
 #from dash_dependencies import Output,Input
 
 
-upLoad_requirements = []      
-            # [ int(Value) of the uploaded file that are selected at the checkBox ]          
-selected_Files = []
-            # [ [ FileName, EnzymeName, dict(Population Location:{Latitude, Longitude, Continent, location}), Sample Size, AlleleInfo index, [Variant heading], [file variants] ] ]
+upLoad_requirements = []   
+           # [ [ FileName, EnzymeName, dict(Population Location:{Latitude, Longitude, Continent, location}), Sample Size, AlleleInfo index, [Variant heading], [file variants] ] ]
 upLoaded_Details = []
             # Contains all the global coordinates for all the population groups from 1000 Genome project
 Coordinates = {
@@ -249,35 +248,6 @@ def Sort_continents(Plot_info):
             return output
     return output
 
-# returns the specification of the subplots
-def subPlots_spec (data, boolen):
-    domains = []
-    specs = []
-    start = 0
-    if len(data) == 1:
-        if boolen:
-            specs.append([{'colspan': 2}, None])
-        else:
-            specs.append([{"type": "scattergeo", "colspan": 2}, None])
-        return specs
-    else:
-        while start < len(data):
-            if boolen:
-                domains.append({})
-            else:
-                domains.append({"type": "scattergeo"})
-            if len(domains) == 2:        
-                specs.append(domains)
-                domains = []
-            start = start + 1
-        if start%2 != 0:
-            if boolen:
-                specs.append([{'colspan': 2}, None])
-            else:
-                specs.append([{"type": "scattergeo", "colspan": 2}, None])
-              
-        return specs
-
 # returns a Panda {latitude, longitude, location, Homogenous, Heterogenous, Average Variant Percentage(%)} 
 def variant_Info(figure_data):
     start = 0
@@ -313,76 +283,64 @@ def variant_Info(figure_data):
     data = Data_Frame.DataFrame(data)
     return data
 
+# return each plot in its own row using dbc
+def plot_Layouts(Plots):
+    row = []
+    parse = 0
+    while parse < len(Plots):
+        row_item = dbc.Row(
+            children = dcc.Graph( figure = Plots[parse])
+        )
+        row.append(row_item)
+        parse = parse + 1
+    return row
+
 # returns a graph base on user selection
 def Plotly_graph(Plot_info, Plot_type):
     data = []
     figure_data = Sort_info(Plot_info, Plot_type)
     if Plot_type == 'Bar_Graph':
-        specs = subPlots_spec(figure_data, True)
-        rows = math.ceil(len(figure_data)/2)
-        figure = make_subplots(
-                        rows=rows, cols=2, specs= specs)
         parse_Points = 0
-        col = 1
-        row = 1
+        store_Plots = []
         while parse_Points < len(figure_data):
             start = 0
-            plots = figure_data[parse_Points]  
+            plots = figure_data[parse_Points]
+            figure = plot.Figure()  
             while start < len(plots):                    
                 file_name = plots[start][0]
-                Enzyme_name = plots[start][1]
                 figure.add_trace(plot.Bar(
-                    name = (file_name + ' - ' + Enzyme_name),
+                    name = file_name,
                     x = plots[start][4]['Variants ID'],
                     y = plots[start][4]['Percentage']
-                    ), row = row, col=col)
+                    ))
                 start = start + 1
-            figure.update_xaxes(title_text="Variant ID", row=row, col=col)
-            figure.update_yaxes(title_text="Percentage (%)", row=row, col=col)
-                    
-            if col == 2:
-                col = 0
-                row = row + 1
-            col = col + 1
-            parse_Points= parse_Points + 1
-        figure.update_layout(title_text="Pharmaco variants found"
-                                )
-        return figure
+            figure.update_layout(title_text=plots[0][1], xaxis=dict(title_text="Percentage (%)"), yaxis=dict(title_text="Variant ID"))
+            store_Plots.append(figure)   
+            parse_Points= parse_Points + 1        
+        
+        return store_Plots
     
     if Plot_type == 'Scatter':
-        specs = subPlots_spec(figure_data, True)
-        rows = math.ceil(len(figure_data)/2)
-        figure = make_subplots(
-                    rows=rows, cols=2, specs= specs)
+        store_Plots = []
         parse_Points = 0
-        col = 1
-        row = 1
         while parse_Points < len(figure_data):
             start = 0
             plots = figure_data[parse_Points]   
-
+            figure = plot.Figure()
             while start < len(plots):                    
                 file_name = plots[start][0]
-                Enzyme_name = plots[start][1]
                 figure.add_trace(plot.Scatter(
-                    name = (file_name + ' - ' + Enzyme_name),
+                    name = (file_name),
                     x = plots[start][4]['Variants ID'],
                     y = plots[start][4]['Percentage'],
                     mode = 'markers'
-                    ), row = row, col=col)
+                    ))
                 start = start + 1
-            figure.update_xaxes(title_text="Variant ID", row=row, col=col)
-            figure.update_yaxes(title_text="Percentage (%)", row=row, col=col)
-                    
-                
-            if col == 2:
-                col = 0
-                row = row + 1
-            col = col + 1
+            figure.update_layout(title_text=plots[0][1], xaxis=dict(title_text="Percentage (%)"), yaxis=dict(title_text="Variant ID"))
+            store_Plots.append(figure)   
             parse_Points= parse_Points + 1
-        figure.update_layout(title_text="Pharmaco variants found"
-                                )
-        return figure
+
+        return store_Plots
     
     if Plot_type != 'Continential':
         data = variant_Info(figure_data)
@@ -391,7 +349,7 @@ def Plotly_graph(Plot_info, Plot_type):
                     lat =  'Lat',
                     lon= 'Long',
                     color = 'Average Variant Percentage(%)',
-                    hover_name = 'Enzyme -' + data['Enzy'] + '<br>' + 'Location - ' + data['loc'] + '<br>' + 'Homogenous variants - '+ data['Homogenous'] + 'Heterogenous variants - '+ data['Heterogenous'],
+                    hover_name = 'Enzyme - ' + data['Enzy'] + '<br>' + 'Location - ' + data['loc'] + '<br>' + 'Homogenous variants - '+ data['Homogenous'] + 'Heterogenous variants - '+ data['Heterogenous'],
                     projection= 'orthographic',
                     title = 'Globe: Population Geo-location'
                 )
@@ -423,23 +381,13 @@ def Plotly_graph(Plot_info, Plot_type):
                 )
             return figure
     else:
-        plot_data = Sort_continents(Plot_info)        
-        rows = math.ceil(len(plot_data)/2)
+        plot_data = Sort_continents(Plot_info) 
         parse_Points = 0
-        col = 2
-        specs = subPlots_spec(plot_data, False)
         subplot_titles  = []
         start = 0
-        while start < len(plot_data):
-            continent = plot_data[start]
-            subplot_titles .append(continent[0][2]['Continent'])
-            start = start + 1        
-        figure = make_subplots(
-                rows = rows, cols= col, specs= specs, subplot_titles = subplot_titles 
-            )
-        row = 1
-        col = 1
+        store_Plots = []        
         while parse_Points < len(plot_data):
+            figure = plot.Figure()
             plots = plot_data[parse_Points]            
             scope = plots[0][2]['Continent']
             data = variant_Info(plots)
@@ -449,9 +397,7 @@ def Plotly_graph(Plot_info, Plot_type):
                     mode = 'markers',
                     marker_color = data['Average Variant Percentage(%)'],
                     text  = 'Enzyme -' + data['Enzy'] + '<br>' + 'Location - ' + data['loc'] + '<br>' + 'Homogenous variants - '+ data['Homogenous'] + 'Heterogenous variants - '+ data['Heterogenous']
-                ),
-                row = row, col = col
-            )
+                ))
             figure.update_geos(dict(
                     scope = scope,
                     showland = True,
@@ -459,17 +405,11 @@ def Plotly_graph(Plot_info, Plot_type):
                     showcountries = True,
                     subunitcolor = "rgb(255, 255, 255)",
                     countrycolor = "rgb(217, 217, 217)",
-                    ),
-                row = row, col = col
-            )
-            if col == 2:
-                col = 0
-                row = row + 1
-            col = col + 1
-            parse_Points= parse_Points + 1
-        figure.update_layout(title_text="Variant data per continent")
-        
-        return figure
+                    ))
+            parse_Points = parse_Points + 1
+            figure.update_layout(title_text=scope.upper())
+            store_Plots.append(figure)
+        return store_Plots
         
 # returns [  Sample Size, AlleleInfo index, [Variant heading], [Pharmaco variants contained in VCF file] ]
 def Pharmaco_VariantParse(PharmacoVariants, VCF_Filedetails):
@@ -487,7 +427,7 @@ def Pharmaco_VariantParse(PharmacoVariants, VCF_Filedetails):
     return VCF_Filedetails
     
 # returns a new option form for uploaded file
-def Add_CheckBoxMW( NameList):
+def Add_CheckBoxMW(NameList):
     option = {}
     store = []
     start = 0
@@ -786,11 +726,7 @@ def setting_VariantInfo(booleanSU, booleanD, variants_Data, Database):
                 else:
                     heading = html.H5(Variants_found[1] + ' - No Pharmaco Variants found in the selected files')
                     layout.append(heading)
-            else:
-                layout = html.Div( 
-                    html.H6("Single file selected")
-                    )
-                return layout
+            
             start = start + 1
         return layout     
     
@@ -798,31 +734,56 @@ def setting_VariantInfo(booleanSU, booleanD, variants_Data, Database):
 def AD_dropdown():
     layout = html.Div(
         [
-            html.Div([dbc.DropdownMenu([dbc.DropdownMenuItem(id = 'anticoagulation')],label="Anticoagulation Drugs")], id="Antico"),
-            html.Div([dbc.DropdownMenu( [dbc.DropdownMenuItem(id = 'antidepressants')], label="Antidepressants Drugs")], id="Antide"),
-            html.Div([dbc.DropdownMenu([dbc.DropdownMenuItem(id = 'antifungals')], label="Antifungals Drugs")], id="Antifu"),
-            html.Div([dbc.DropdownMenu( [dbc.DropdownMenuItem(id = 'antipsychotics')], label="Antipsychotics Drugs")], id="Antips"),
-            html.Div([dbc.DropdownMenu(label="Antiretroviral Drugs", children = [dbc.DropdownMenuItem(id = 'antiretroviral')])], id="Antire"),
-            html.Div([dbc.DropdownMenu(label="Antitumor Drugs", children = [dbc.DropdownMenuItem(id = 'antitumor')])], id="Antitu"),
-            html.Div([dbc.DropdownMenu(label="Beta-Blockers Drugs", children = [dbc.DropdownMenuItem(id = 'beta-blockers')])], id="Bet"),
-            html.Div([dbc.DropdownMenu(label='Immunosuppressive Drugs', children = [dbc.DropdownMenuItem(id = 'immunosuppressive')])], id="Immu"),
-            html.Div([dbc.DropdownMenu(label="Miscellaneous Drugs", children = [dbc.DropdownMenuItem(id = 'Miscellaneous')])], id="Mis"),
-            html.Div([dbc.DropdownMenu(label="NSAIDS Drugs", children = [dbc.DropdownMenuItem(id = 'NSAIDS')])], id="NSAI"),
-            html.Div([dbc.DropdownMenu(label="Opioids Drugs", children = [dbc.DropdownMenuItem(id = 'opioids')])], id="Opio"),
+            html.Div([dbc.Button("Anticoagulation Drugs", id="Antico"), dbc.Collapse(dbc.Card(dbc.CardBody(id = 'anticoagulation')), id = 'anticoagulation_B')]),
+            html.Div([dbc.Button("Antidepressants Drugs", id="Antide"), dbc.Collapse(dbc.Card(dbc.CardBody(id = 'antidepressants')), id="antidepressants_B")]),
+            html.Div([dbc.Button("Antifungals Drugs", id = 'antifungals'), dbc.Collapse( dbc.Card(dbc.CardBody(id="Antifu")), id="Antifu_B")]),
+            html.Div([dbc.Button( "Antipsychotics Drugs", id="Antips"), dbc.Collapse(dbc.Card(dbc.CardBody(id = 'antipsychotics')),id="Antips_B")]),
+            html.Div([dbc.Button("Antiretroviral Drugs", id="Antire"), dbc.Collapse(dbc.Card(dbc.CardBody(id = 'antiretroviral')),id="Antire_B")]),
+            html.Div([dbc.Button("Antitumor Drugs", id="Antitu"), dbc.Collapse(dbc.Card(dbc.CardBody(id = 'antitumor')),id="Antitu_B")]),
+            html.Div([dbc.Button("Beta-Blockers Drugs", id="Bet"), dbc.Collapse(dbc.Card(dbc.CardBody(id = 'beta-blockers')),id="Bet_B")]),
+            html.Div([dbc.Button('Immunosuppressive Drugs', id="Immu"), dbc.Collapse(dbc.Card(dbc.CardBody(id = 'immunosuppressive')),id="Immu_B")]),
+            html.Div([dbc.Button("Miscellaneous Drugs", id="Mis"), dbc.Collapse(dbc.Card(dbc.CardBody(id = 'Miscellaneous')),id="Mis_B")]),
+            html.Div([dbc.Button("NSAIDS Drugs", id = 'NSAIDS'), dbc.Collapse(dbc.Card(dbc.CardBody(id="NSAI")),id="NSAI_B")]),
+            html.Div([dbc.Button("Opioids Drugs", id = 'opioids'), dbc.Collapse(dbc.Card(dbc.CardBody(id="Opio")),id="Opio_B")]),
             #dbc.DropdownMenu(label="Drugs", children = [dbc.DropdownMenuItem(id = 'Drugs')], id="Dru")
         ]
     )
     return layout
 
+# return files that can be used for unique, shared variants and enzyme names for affected drugs
+def Usable_files(output_Type, selected_Files):
+    if output_Type:
+        start = 0
+        Usable_filesOutput = []
+        while start < len(selected_Files):
+            loaded_files = selected_Files[start]
+            if len(loaded_files) > 1:
+                Usable_filesOutput.append(loaded_files)
+            start = start + 1
+        return Usable_filesOutput
+    else:
+        start = 0
+        selected_Enzymes = []
+        while start < len(selected_Files):
+            selected_Enzymes.append(selected_Files[start][0][1])
+            start = start + 1
+        return selected_Enzymes
+
 # returns the table of drugs which are proccessed by the enzyme in question
 def drugs_Affected(enzymes, selected_Drug, Database):
+    Database = mysql.connector.connect(
+        host = 'localhost',
+        user = 'root',
+        passwd = 'PharmacoEnzymeVariantInfo@Thulani971108',
+        database = 'enzyme_variantinfo',
+        )
     start = 0
     table_color = False
     path = os.getcwd()      
     store_items = []
     path = path + '\\Drugs\\' + selected_Drug
     while start < len(enzymes):
-        enzymeName = enzymes[start][0][1]
+        enzymeName = enzymes[start]
         drugs_detail = get_TableInfo(Database, selected_Drug)
         parse = 0
         drugName = selected_Drug.lower() 
@@ -841,13 +802,13 @@ def drugs_Affected(enzymes, selected_Drug, Database):
                     structure_Path = path + '\\' + drug_Type[1]
                     structure_List = [
                         join( structure_Path, fn )                    
-                        for fn in listdir(structure_Path)           
+                        for fn in listdir(structure_Path.strip())           
                         if isfile( join( structure_Path, fn ) ) and fn.lower().endswith(('.png','.jpg'))
                        ]
                     metabolite_Path = structure_Path + '\\' + 'Metabolite(s)'
                     metabolite_List = [ 
                         join( metabolite_Path, fn )                    
-                        for fn in listdir(metabolite_Path)           
+                        for fn in listdir(metabolite_Path.strip())           
                         if isfile( join( metabolite_Path, fn ) ) and fn.lower().endswith(('.png','.jpg')) and fn.startswith(enzymeName)
                         ]                          
                     affected = True
@@ -875,7 +836,7 @@ def drugs_Affected(enzymes, selected_Drug, Database):
         else:
             store_items.append(html.Div('Enzyme does not participate in metabolizing any drug in selected category'))
         start = start + 1   
-    layout = html.Div(children = store_items, style={"width":"40%"})
+    layout = html.Div(children = store_items)
     return layout
 
 # returns selected table(s) details from database 

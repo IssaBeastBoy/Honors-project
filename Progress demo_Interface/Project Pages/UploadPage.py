@@ -221,7 +221,7 @@ population = [
                  dcc.RadioItems( 
                             id = 'NA',
                             options=[
-                                {'label':'N/A - None Specfic', 'value': '1'}
+                                {'label':'Enter custom population', 'value': '1'}
                             ],
                             )
             )
@@ -234,6 +234,84 @@ populationGroups =  html.Div([
         children= population
     )
     ], id = 'population')
+
+Continent_Form = dbc.FormGroup(
+        [
+            dbc.Label('Selected continent which the .vcf file is fom'),
+            dcc.Dropdown(
+                options=[
+                    {'label': 'Africa', 'value': 0},
+                    {'label': 'Asia', 'value': 1},
+                    {'label': 'Europe', 'value': 2},
+                    {'label': 'North America', 'value': 3},
+                    {'label': 'South America', 'value': 4}
+                    ],
+                id = 'continent',
+                placeholder="Select a continent...")
+        ]
+    )
+
+Location_form = dbc.FormGroup(
+        [
+            dbc.Label('Enter the location (Country, Province or State, Town)'),
+            dbc.Input(type='text', id='location')
+        ]
+    )
+
+Coors_Form = dbc.FormGroup(
+        [
+            dcc.ConfirmDialog(
+                id='confirm',
+                message='Danger! Moving to MainWindow without adding all the required upLoading details',
+            ),
+            dbc.Row([
+                dbc.Col(
+                [
+                    dbc.Label('Enter the longitude coordinates.'),
+                    dbc.Input(type='text', placeholder = 'Longitude...', id = 'log')
+                ],
+                    width=6
+                ),
+                dbc.Col(
+                [
+                    dbc.Label('Enter the Latitude coordinates.'),
+                    dbc.Input(type='text', placeholder = 'Latitude...', id = 'lat')
+                ],
+                    width=6
+                )
+            ]),
+            dbc.Row(
+                    children =[dbc.Button("Get coordinates", color="link", href='https://www.latlong.net/', target = '_blink')],
+                    justify = "end"
+            ),
+            dbc.Row(
+                [
+                    html.Div(['All the above fields are required and incorrect inputs will results in processing errors'], style={'color':'red'})
+                   
+                ]
+            ),
+            dbc.Row(
+                    [dbc.Collapse(
+                        dbc.Card(dbc.CardBody(dbc.Button('Submit', id = 'close', color = 'success'))),
+                            id="submit",
+                        )]
+            )
+        ]
+    )
+
+Popup = html.Div([
+                dbc.Alert(
+                    [
+                        html.Center(html.H5('You have added a custom .vcf')),
+                        dbc.Form(
+                            [Continent_Form, Location_form, Coors_Form]
+                        )
+                    ],
+                    color = 'success',
+                    is_open = False,
+                    id = 'Popup'
+                )
+    ])
 
 ##app.layout = html.Div([
 ##    dcc.Location(id = 'url', refresh = False),
@@ -250,6 +328,12 @@ def Upload():
             dbc.Row([
                 upLoad
             ]),
+            dbc.Row(
+                [
+                    Popup
+                ],
+                justify="center",
+            ),
             dbc.Row([
                 dbc.Col(
                     [

@@ -3,35 +3,52 @@ import dash_bootstrap_components as dbc
 import dash_core_components as dcc 
 import dash_html_components as html 
 
-from Methods import Add_CheckBoxMW
-from MW_Topbuttons import SU_button , AV_button, DrugA_button, Variant_information
-
+from Methods import Add_CheckBoxMW, AD_dropdown
 
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.GRID, dbc.themes.BOOTSTRAP])
 app.config.suppress_callback_exceptions = True
 
 storeOptions = []
+activiate_DropDown = ["", "", ""]
 
 def MainWindow(): 
     layout = html.Div(
-            [  dbc.Row(
-                [
-                    dbc.Col(
-                        html.Div(SU_button), width=4
-                    ),
-                    dbc.Col(
-                        html.Div(AV_button), width=4
-                    ),
-                    dbc.Col(
-                        html.Div(DrugA_button), width=4
-                    )
-                ],
-                justify="between",
-            ),
-                dbc.Row(
-                [Variant_information]
-            ),
+            [  
+            dbc.Row([
+                dbc.Col(
+                    html.Div(dbc.Button(
+                            'Shared Variants', 
+                            color = 'success',
+                            id = 'SV_button')
+                        )),
+                dbc.Col(
+                    html.Div(dbc.Button(
+                            'Unique Variants', 
+                            color = 'success',
+                            id = 'UV_button')
+                        )),
+                dbc.Col(
+                    html.Div(dbc.Button(
+                            'Drugs Affected', 
+                            color ='success',
+                            id = 'DrugA_button')
+                )) 
+            ], 
+                justify = 'between'),
+            dbc.Row([dbc.Collapse(
+                        dbc.Card(
+                            dbc.CardBody(
+                                [html.Div(dbc.Button('Close', color ='danger', id = 'Close_DropDown')),
+                                 html.Div([dcc.Loading(
+                                     type = 'circle',
+                                     children =html.Div(id="Display")
+                                 )])
+                                ]
+                        )
+                ),
+                        id="Display_table",)]),
             html.Br(),
+            html.Div(id = 'activiate', style ={'display':'none'}),
             dbc.Row([
                 dbc.Col([
                     dcc.Loading(
@@ -48,8 +65,7 @@ def MainWindow():
               , 
                 dbc.Col([
                     dbc.Row([
-                             html.Div(id = 'Delete_buttonSpace'),
-                            html.Div(id = 'CheckBox', style={'display': 'none'})
+                             html.Div(id = 'Delete_buttonSpace')
                         ])                
               ,
                     dbc.Row([

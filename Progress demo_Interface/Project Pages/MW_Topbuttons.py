@@ -9,30 +9,38 @@ import plotly.graph_objects as plot
 #app.scripts.append_script({'external_url': 'https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js'})
 #app.scripts.append_script({'external_url':'https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.bundle.min.js'})
 
-Variant_information = dbc.Collapse(
-            dbc.Card(
-                dbc.CardBody(
-                    dcc.Loading(
-                type="default",
-                children=html.Div(id="Tables")
-        )
-                 )
-            ),
-            id = 'info_field'
-        )
 
-SU_button = dbc.Button('Shared variants', 
-                        color='secondary', 
-                        className="mt-3",
-                        id = 'SV_button')
 
-AV_button = dbc.Button('Unique variants', 
-                        color='secondary', 
-                        className="mt-3",
-                        id = 'UV_button')
+SU_button = dbc.DropdownMenu(
+                        label = 'Shared Variants', 
+                        color = activiate_DropDown[0],
+                        children=[ 
+                        dcc.Loading(
+                                type = 'circle',
+                                children = dbc.DropdownMenuItem(id = 'Display_SV')
+                            )],
+                        id = 'SV_button'
+                        )
 
-DrugA_button = dbc.Button('Drugs Affected', 
-                        color='secondary', 
-                        className="mt-3",
-                        id = 'DrugA_button')
+AV_button = dbc.DropdownMenu(
+                        label = 'Unique Variants', 
+                        color = activiate_DropDown[1],
+                        children=[ 
+                            dcc.Loading(
+                                type = 'circle',
+                                children = dbc.DropdownMenuItem(id = 'Display_UV')
+                            )],
+                        id = 'UV_button'                       
+                        )
+
+DrugA_button = dbc.DropdownMenu(
+                        label = 'Drugs Affected', 
+                        color = activiate_DropDown[2],
+                        children=[ 
+                            dcc.Loading(
+                                type = 'circle',
+                                children = dbc.DropdownMenuItem(id = 'Display_DrugA')
+                            )],
+                        id = 'DrugA_button'  
+                        ) 
 
