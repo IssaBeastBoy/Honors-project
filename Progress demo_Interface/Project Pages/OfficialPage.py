@@ -26,7 +26,7 @@ keep_Open = [True]
 
 selected_Files = []
 
-app = dash.Dash(__name__, external_stylesheets=[dbc.themes.GRID, dbc.themes.FLATLY])
+app = dash.Dash(__name__, external_stylesheets=[dbc.themes.UNITED])
 #app.css.append_css({'external_url': 'https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css'})
 #app.scripts.append_script({'external_url': 'https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js'})
 #app.scripts.append_script({'external_url':'https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.bundle.min.js'})
@@ -118,7 +118,7 @@ def VCF_processing(contents, filename):
 def EnzyFamily(value1, value2, value3):
     if value1 is None and value2 is None and value3 is None:
         layout = html.Div(
-            html.Center('*Fill in up the field above', style={"color":"rgb(255,0,0)"})
+            html.Center('*Fill in the field above', style={"color":"rgb(255,0,0)"})
         )        
     else:
         layout = html.Div('')
@@ -148,7 +148,7 @@ def EnzyFamily(value1, value2, value3):
 def populationGroup(value1, value2, value3, value4, value5, value6, value7):
     if value1 is None and value2 is None and value3 is None and value4 is None and value5 is None and value6 is None and value7 is None:
         layout = html.Div(
-            html.Center('*Fill in up the field above', style={"color":"rgb(255,0,0)"})
+            html.Center('*Fill in the field above', style={"color":"rgb(255,0,0)"})
         )
     else:
         layout = html.Div('')
@@ -670,7 +670,7 @@ def ticked_Files(value):
 )
 
 def Figure(radio, check):
-    avialable_Plot = ['Bar_Graph', 'Scatter', 'Orthographic', 'natural_earth', 'Continential']    
+    avialable_Plot = ['Bar_Graph', 'Scatter', 'Orthographic', 'natural_earth', 'Continential']
     if radio is None and check is None:
         layout = html.Div(
                 html.H4(

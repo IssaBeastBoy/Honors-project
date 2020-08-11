@@ -7,8 +7,8 @@ from dash.dependencies import Output,Input
 
 from Methods import upLoad_requirements
 
-app = dash.Dash(__name__, external_stylesheets=[dbc.themes.UNITED])
-app = dash.Dash(external_stylesheets=[dbc.themes.BOOTSTRAP])
+app = dash.Dash(__name__, external_stylesheets=[dbc.themes.JOURNAL])
+#app = dash.Dash(external_stylesheets=[dbc.themes.BOOTSTRAP])
 #app.css.append_css({'external_url': 'https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css'})
 #app.scripts.append_script({'external_url': 'https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js'})
 #app.scripts.append_script({'external_url':'https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.bundle.min.js'})

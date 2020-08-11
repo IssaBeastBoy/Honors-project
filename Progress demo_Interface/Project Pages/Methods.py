@@ -314,7 +314,7 @@ def Plotly_graph(Plot_info, Plot_type):
                     y = plots[start][4]['Percentage']
                     ))
                 start = start + 1
-            figure.update_layout(title_text=plots[0][1], xaxis=dict(title_text="Percentage (%)"), yaxis=dict(title_text="Variant ID"))
+            figure.update_layout(title_text= ("Pharmaco variants for " + plots[0][1]), yaxis=dict(title_text="Percentage (%)"), xaxis=dict(title_text="Variant ID"))
             store_Plots.append(figure)   
             parse_Points= parse_Points + 1        
         
@@ -336,7 +336,7 @@ def Plotly_graph(Plot_info, Plot_type):
                     mode = 'markers'
                     ))
                 start = start + 1
-            figure.update_layout(title_text=plots[0][1], xaxis=dict(title_text="Percentage (%)"), yaxis=dict(title_text="Variant ID"))
+            figure.update_layout(title_text=("Pharmaco variants for " + plots[0][1]), yaxis=dict(title_text="Percentage (%)"), xaxis=dict(title_text="Variant ID"))
             store_Plots.append(figure)   
             parse_Points= parse_Points + 1
 

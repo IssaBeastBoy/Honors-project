@@ -5,7 +5,7 @@ import dash_html_components as html
 
 from Methods import Add_CheckBoxMW, AD_dropdown
 
-app = dash.Dash(__name__, external_stylesheets=[dbc.themes.GRID, dbc.themes.BOOTSTRAP])
+app = dash.Dash(__name__, external_stylesheets=[dbc.themes.JOURNAL])
 app.config.suppress_callback_exceptions = True
 
 storeOptions = []
@@ -60,7 +60,7 @@ def MainWindow():
                                             'height': '200px'
                                         }
                                 )
-                )], width=9
+                )], width=9, align = '"end"'
                 )
               , 
                 dbc.Col([
@@ -73,13 +73,13 @@ def MainWindow():
                             dbc.Nav(
                         [
                         dbc.NavItem(
-                        dbc.NavLink("Upload", active= True, href='UpLoad')
+                        dbc.NavLink("Upload VCF", active= True, href='UpLoad')
                         )
                         ],
                         pills= True )
                         ), 
                         dbc.Col([
-                        dbc.Button('Delete', color='danger', id ='Delete_button')])
+                        dbc.Button('Delete Selected', color='danger', id ='Delete_button')])
                         ],
                             justify="around",),
                     html.Br(),
