@@ -50,13 +50,11 @@ Button = dbc.Nav(
 )
 
 def Homepage():
-    image_bg = "url(https://wallpapertag.com/wallpaper/full/c/1/b/236091-large-dna-background-1920x1080-images.jpg)"
     layout = html.Div(
         [
             body,
             Button
-        ],
-        style = {"background-image": image_bg}
+        ]
     )
     return layout
 

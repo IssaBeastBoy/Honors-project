@@ -4,7 +4,7 @@ import dash
 import dash_bootstrap_components as dbc 
 import dash_core_components as dcc 
 import dash_html_components as html 
-from dash.dependencies import Input, Output, State
+from dash.dependencies import Input, Output, State, ClientsideFunction
 from plotly import graph_objs as plot
 
 from HomePage import Homepage
@@ -13,7 +13,7 @@ from Methods import VCF_FileParse, plot_Layouts, Usable_files, Coordinates, Coor
 from MainWindow import MainWindow, storeOptions, activiate_DropDown
 
 
-Database = mysql.connector.connect(
+Database = mysql.connector.connect( 
     host = 'localhost',
     user = 'root',
     passwd = 'PharmacoEnzymeVariantInfo@Thulani971108',
@@ -26,7 +26,7 @@ keep_Open = [True]
 
 selected_Files = []
 
-app = dash.Dash(__name__, external_stylesheets=[dbc.themes.UNITED])
+app = dash.Dash(__name__, external_stylesheets=[dbc.themes.JOURNAL])
 #app.css.append_css({'external_url': 'https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css'})
 #app.scripts.append_script({'external_url': 'https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js'})
 #app.scripts.append_script({'external_url':'https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.bundle.min.js'})
@@ -88,8 +88,12 @@ def VCF_processing(contents, filename):
                 'Drag and Drop .vcf '
             )
         ]
-        )
-    else:       
+        ) 
+        return layout
+    else:
+        if '.vcf' not in filename:
+            #... I want to call the .js function here to tell the user that a incorrect file has been uploaded
+            hello = 1
         format_Content = contents.split(',')
         file_information = format_Content[1]
         base64_bytes = file_information.encode('ascii')
@@ -541,6 +545,37 @@ def NSAIDS_Collapse(clicks, is_open):
         if clicks%2 == 0 or is_open == True:
             return not is_open
 
+#Call back for displaying drug proton pump table
+@app.callback(
+    Output('Proton_Pump', 'children'),
+    [
+     Input('PPI', 'n_clicks'),
+     Input('CheckBox_File','value')
+     ]
+ )
+
+def anticoagulation(clicks, value):
+    if clicks != None and clicks%2 > 0:
+        ordered_Files = Sort_info(Plot_points(upLoaded_Details, value), 'Bar_Graph')
+        enzymes_Name = Usable_files(False, ordered_Files)    
+        return drugs_Affected(enzymes_Name, 'Proton_pump_inhibitor', Database)
+
+#Call back for closing anticoagulation collapse
+@app.callback(
+    Output('PPI_B', 'is_open'),
+    [Input('PPI', 'n_clicks')],
+    [State('PPI_B', 'is_open')]
+ )
+
+def anticoagulation_Collapse(clicks, is_open):
+    if clicks == None and is_open == None:
+        return is_open
+    if clicks != None and clicks%2 >0:
+        return not is_open
+    else:
+        if clicks%2 == 0 or is_open == True:
+            return not is_open
+
 #Call back for displaying drug Opioids table
 @app.callback(
     Output('Opio', 'children'),
@@ -670,7 +705,7 @@ def ticked_Files(value):
 )
 
 def Figure(radio, check):
-    avialable_Plot = ['Bar_Graph', 'Scatter', 'Orthographic', 'natural_earth', 'Continential']
+    avialable_Plot = ['Bar_Graph', 'Scatter', 'Sunburst', 'Orthographic', 'natural_earth', 'Continential']
     if radio is None and check is None:
         layout = html.Div(
                 html.H4(
@@ -696,14 +731,14 @@ def Figure(radio, check):
             return layout
         else:
             figure = Plotly_graph(Plot_points(upLoaded_Details, check), avialable_Plot[int(radio)-1])
-            if avialable_Plot[int(radio)-1] == 'Orthographic' or avialable_Plot[int(radio)-1] == 'natural_earth':
+            if avialable_Plot[int(radio)-1] == 'Bar_Graph' or avialable_Plot[int(radio)-1] == 'Scatter' or avialable_Plot[int(radio)-1] == 'Sunburst' or avialable_Plot[int(radio)-1] == 'Continential':
                 layout = html.Div(
-                        children = dcc.Graph(figure = figure)
+                        children = plot_Layouts(figure)
                     )
                 return layout
             else:
                 layout = html.Div(
-                        children = plot_Layouts(figure)
+                        children = dcc.Graph(figure = figure)                        
                     )
                 return layout
 

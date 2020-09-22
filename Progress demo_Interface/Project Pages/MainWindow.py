@@ -91,9 +91,10 @@ def MainWindow():
                                 options=[
                                     {'label':'Bar Graph', 'value': '1'},
                                     {'label':'Scatter Plot', 'value': '2'},
-                                    {'label': 'Orthographic Map', 'value': '3'},
-                                    {'label': 'Natural Earth Map', 'value': '4'},
-                                    {'label': 'Continential Map', 'value': '5'},
+                                    {'label':'Sunburst Plot', 'value': '3'},
+                                    {'label': 'Orthographic Map', 'value': '4'},
+                                    {'label': 'Natural Earth Map', 'value': '5'},
+                                    {'label': 'Continential Map', 'value': '6'},
                                 ],
                                 id = 'Plot_Options',
                                 labelStyle={'display': 'block'}

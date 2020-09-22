@@ -29,18 +29,8 @@ upLoad = dbc.Container(
                     children = dcc.Upload(
                         html.Div(
                             id = 'place_Filename'
-                            )
-                        ,
-                        style ={
-                        'width': '100%',
-                        'height': '150px',
-                        'lineHeight': '60px',
-                        'borderWidth': '1px',
-                        'borderStyle': 'dashed',
-                        'borderRadius': '5px',
-                        'textAlign': 'center',
-                        'margin': '10px'
-                    },
+                            ),
+                    className = 'Upload_File',
                     multiple = False,
                     id = 'VCF'
                 )            ,
@@ -325,6 +315,18 @@ Popup = html.Div([
 def Upload():
     layout = html.Div(
         [
+            html.Div(
+                className = 'popup_File',
+                id = 'Wrong_file',
+                children = [
+                        html.Div( 
+                            className = 'header', 
+                            children = [
+                                html.Div("Invalid file type", className = 'title'),
+                                html.Button('&times', className = 'Close_wrongFile', id = 'File')]),
+                        html.Div('The file you have uploaded does not have the vcf file extension.', className = 'Warning_wrongfile')
+                    ]
+            ),
             dbc.Row([
                 upLoad
             ]),

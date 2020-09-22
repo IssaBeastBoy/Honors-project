@@ -1,0 +1,51 @@
+.popup_File {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, 50%) scale(0);
+    transition: 500ms ease-in-out;
+    border: 1px solid black;
+    border-radius: 10px;
+    z-index: 10px;
+    width: 500px;
+    max-width: 80%;
+}
+
+.popup_File.active{
+    transform: translate(-50%, 50%) scale(1);
+}
+
+.popup_File-header{
+    padding: 50% 50%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.popup_File-header .title{
+    font-size: 1.25rem;
+    font-weight: bold;
+}
+
+.popup_File-header .Close_wrongFile{
+    cursor: pointer;
+    border: none;
+    outline: none;
+    background: none;
+    font-size: 1.25rem;
+    font-weight: bold;
+}
+
+.popup_File-Warning_wrongfile{
+    padding: 50% 50%; 
+}
+
+.Upload_File{
+    width: 100%;
+    Height: 150px;
+    line-height: 60px;
+    border: 1px dashed black;
+    border-radius: 5px;
+    text-align: center;
+    margin: '10px';
+}

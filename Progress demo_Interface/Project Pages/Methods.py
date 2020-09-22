@@ -134,19 +134,19 @@ def Data_Structure (Input_VCFdata):
         Homo_gene = []
         start = Input_VCFdata[4]        
         Pharmaco_Variant = variant_Data[parse]
-        X_axis.append(Pharmaco_Variant[2])
         while start < len(Pharmaco_Variant):
             allele_type  = Pharmaco_Variant[start]
             if allele_type == '0|1' or allele_type == '1|0':
                 Hetero_gene.append(header[start])
                 Homo_gene.append(None)
-            if allele_type == '1|1':
+            elif allele_type == '1|1':
                 Homo_gene.append(header[start])
                 Hetero_gene.append(None)
             start = start + 1     
-        parse =  parse + 1            
-        store_variantInfo = {Pharmaco_Variant[2]:{'Homgeneous Samples': Homo_gene, 'Heterogenous Samples':Hetero_gene}}
-        allele_info.append(store_variantInfo)
+        parse =  parse + 1 
+        if Homo_gene != [] or Hetero_gene != []:           
+            store_variantInfo = {Pharmaco_Variant[2]:{'Homogeneous Samples': Homo_gene, 'Heterogenous Samples':Hetero_gene}}
+            allele_info.append(store_variantInfo)
         start = 0
         while start < len(Hetero_gene):
             if Hetero_gene[start] == None:                
@@ -162,12 +162,14 @@ def Data_Structure (Input_VCFdata):
             else:
                 start = start + 1
         variant_Count = ((len(Hetero_gene) + len(Homo_gene)) * 100) / Input_VCFdata[3]
-        Y_axis.append(variant_Count)
-        Homogene_count = (len(Homo_gene)* 100)/ Input_VCFdata[3]
-        store_HomoCount.append([Homogene_count, len(Homo_gene)])
-        Heterogene_count = (len(Hetero_gene)* 100)/ Input_VCFdata[3]
-        store_HeteroCount.append([Heterogene_count,len(Hetero_gene)])  
-    compile_Data = {'Variants ID': X_axis, 'Percentage': Y_axis, 'Homgeneous Count': store_HomoCount, 'Heterogenous Count':store_HeteroCount }
+        if variant_Count > 0:
+            X_axis.append(Pharmaco_Variant[2])
+            Y_axis.append(variant_Count)
+            Homogene_count = (len(Homo_gene)* 100)/ Input_VCFdata[3]
+            store_HomoCount.append([Homogene_count, len(Homo_gene)])
+            Heterogene_count = (len(Hetero_gene)* 100)/ Input_VCFdata[3]
+            store_HeteroCount.append([Heterogene_count,len(Hetero_gene)])
+    compile_Data = {'Variants ID': X_axis, 'Percentage': Y_axis, 'Homogeneous Count': store_HomoCount, 'Heterogenous Count':store_HeteroCount }
     Organized_format.append(allele_info)
     structure = Data_Frame.DataFrame(compile_Data)
     Organized_format.append(structure)    
@@ -176,7 +178,7 @@ def Data_Structure (Input_VCFdata):
 # returns a list of plot information grouped in same enzymes
 def Sort_info(Plot_info, Plot_type):
     Sorted_PlotInfo = []
-    if Plot_type == 'Bar_Graph' or Plot_type == 'Scatter':
+    if Plot_type == 'Bar_Graph' or Plot_type == 'Scatter' or Plot_type == 'Sunburst':
         if len(Plot_info) == 1:
             Sorted_PlotInfo.append(Plot_info)
             return Sorted_PlotInfo
@@ -263,7 +265,7 @@ def variant_Info(figure_data):
         longitude.append(figure_data[start][2]['Long'])
         location.append(figure_data[start][2]['location'])
         Enzyme.append(figure_data[start][1])
-        Homo_data = figure_data[start][4]['Homgeneous Count']
+        Homo_data = figure_data[start][4]['Homogeneous Count']
         Hetero_data = figure_data[start][4]['Heterogenous Count']
         parse = 0
         homo_detail = 0
@@ -295,6 +297,102 @@ def plot_Layouts(Plots):
         parse = parse + 1
     return row
 
+# return panda {Continent, Country, Enzyme, Variant Name, Homogeneous, Hetereogenous}
+def sunburst_Data(variant_info):
+    start = 0
+    Enzyme_Name = []
+    Continent = []
+    Country = []
+    Variant = []
+    Homogeneous = []
+    Hetereogenous = []
+    while start < len(variant_info):
+        Variants = variant_info[start][3]
+        parse_Variants = 0
+        while parse_Variants < len(Variants):
+            details = Variants[parse_Variants]
+            for variantID, SampleInfo in details.items():
+                checker = [0, 0]
+                for SampleType, SampleNames in SampleInfo.items():
+                    if len(SampleNames) != 0 and SampleType == 'Heterogenous Samples':
+                        checker[0]=len(SampleNames)
+                        count = 0
+                        while count < len(SampleNames):
+                            Hetereogenous.append(SampleNames[count])
+                            count = count + 1
+                            
+                    if len(SampleNames) != 0 and SampleType == 'Homogeneous Samples':
+                        checker[1]=len(SampleNames)
+                        count = 0
+                        while count < len(SampleNames):
+                            Homogeneous.append(SampleNames[count])
+                            count = count + 1
+                if checker[0] < checker[1]:
+                    fill = checker[1] - checker[0]
+                    count = 0
+                    while count < fill:
+                        Hetereogenous.append('None')
+                        count = count + 1
+                    count = 0
+                    while count <checker[1]:
+                        Continent.append(variant_info[start][2]['Continent'])
+                        Country.append(variant_info[start][2]['location'])
+                        Enzyme_Name.append(variant_info[start][1]) 
+                        Variant.append(variantID)
+                        count = count + 1
+                elif checker[1] < checker[0]:
+                    fill = checker[0] - checker[1]
+                    count = 0
+                    while count < fill:
+                        Homogeneous.append('None')
+                        count = count + 1 
+                    count = 0
+                    while count <checker[0]:
+                        Continent.append(variant_info[start][2]['Continent'])
+                        Country.append(variant_info[start][2]['location'])
+                        Enzyme_Name.append(variant_info[start][1]) 
+                        Variant.append(variantID)
+                        count = count + 1    
+                else:
+                    count = 0
+                    while count <checker[0]:
+                        Continent.append(variant_info[start][2]['Continent'])
+                        Country.append(variant_info[start][2]['location'])
+                        Enzyme_Name.append(variant_info[start][1]) 
+                        Variant.append(variantID)
+                        count = count + 1 
+                
+            parse_Variants = parse_Variants + 1
+        start = start + 1
+    panda = {'Continient':Continent, 'Country':Country, 'Enzyme_Name':Enzyme_Name, 'Variant': Variant, 'Homogenous': Homogeneous, 'Heterogenous': Hetereogenous}
+    data = Data_Frame.DataFrame(panda)
+    return data
+
+# returns the panda {Variant, Percentage, Homogeneous Count, Hetereogenous Count} plot points for 3D scatter plot
+def scatter_Plot(panda):
+    variant_ID = panda['Variants ID']
+    Percentage = panda['Percentage']
+    homogenous_variantsD = panda['Homogeneous Count']
+    heterogenous_variantsD = panda['Heterogenous Count']
+    homogenous_variants=[]
+    heterogenous_variants=[]
+    start = 0
+    while start < len(homogenous_variantsD):
+        temp_Homo = homogenous_variantsD[start][1]
+        if homogenous_variantsD[start][1]>= 1:
+            homogenous_variants.append(1)
+        else:
+            homogenous_variants.append(None)
+
+        if heterogenous_variantsD[start][1]>=1:
+            heterogenous_variants.append(2)
+        else:
+            heterogenous_variants.append(None)
+        start = start + 1
+    points = {'Variants ID': variant_ID, 'Percentage': Percentage, 'Homogeneous Count': homogenous_variants, 'Heterogenous Count':heterogenous_variants}
+    pandas_points = Data_Frame.DataFrame(points) 
+    return pandas_points
+
 # returns a graph base on user selection
 def Plotly_graph(Plot_info, Plot_type):
     data = []
@@ -325,23 +423,70 @@ def Plotly_graph(Plot_info, Plot_type):
         parse_Points = 0
         while parse_Points < len(figure_data):
             start = 0
-            plots = figure_data[parse_Points]   
+            plots = figure_data[parse_Points]
             figure = plot.Figure()
             while start < len(plots):                    
                 file_name = plots[start][0]
-                figure.add_trace(plot.Scatter(
-                    name = (file_name),
-                    x = plots[start][4]['Variants ID'],
-                    y = plots[start][4]['Percentage'],
+                scatter_points = scatter_Plot(plots[start][4])
+
+                figure.add_trace(plot.Scatter3d(
+                    name = file_name,
+                    x = scatter_points['Heterogenous Count'],
+                    y = scatter_points['Variants ID'],
+                    z = scatter_points['Percentage'], 
+                    mode = 'markers'
+                    ))
+                figure.add_trace(plot.Scatter3d(
+                    name = '',
+                    x = scatter_points['Homogeneous Count'],
+                    y = scatter_points['Variants ID'],
+                    z = scatter_points['Percentage'], 
                     mode = 'markers'
                     ))
                 start = start + 1
-            figure.update_layout(title_text=("Pharmaco variants for " + plots[0][1]), yaxis=dict(title_text="Percentage (%)"), xaxis=dict(title_text="Variant ID"))
+            figure.update_layout(title_text=("Pharmaco variants for " + plots[0][1]), 
+                                scene = dict(
+                                        zaxis_title="Percentage (%)", 
+                                        yaxis_title="Variant ID", 
+                                        xaxis_title="Allele type", 
+                                        xaxis = dict(
+                                                ticktext= ['Homogeneous','Hetereogenous'],
+                                                tickvals= [1, 2])),
+                                width = 600,
+                                height = 500,
+                                margin=dict(
+                                        l=50,
+                                        r=0,
+                                        b=20,
+                                        t=25,
+                                        pad=4
+                                )
+
+                                    )
             store_Plots.append(figure)   
             parse_Points= parse_Points + 1
 
         return store_Plots
     
+    if Plot_type == 'Sunburst':
+        store_Plots = []
+        start = 0
+        while start < len(figure_data):
+            plot_points = figure_data[start]
+            data = sunburst_Data(plot_points) 
+            enzymeName = plot_points[0][1]       
+            figure = plotex.sunburst( 
+                        data,
+                        path = ['Continient', 'Country', 'Enzyme_Name', 'Variant', 'Homogenous', 'Heterogenous'],
+                        color = 'Country',
+                        maxdepth = -1,
+                        title= 'Pharmaco variants for ' + enzymeName, 
+                        width=600, 
+                        height=600
+            )
+            store_Plots.append(figure)
+            start =  start + 1
+        return store_Plots
     if Plot_type != 'Continential':
         data = variant_Info(figure_data)
         if Plot_type == 'Orthographic':        
@@ -745,7 +890,8 @@ def AD_dropdown():
             html.Div([dbc.Button("Miscellaneous Drugs", id="Mis"), dbc.Collapse(dbc.Card(dbc.CardBody(id = 'Miscellaneous')),id="Mis_B")]),
             html.Div([dbc.Button("NSAIDS Drugs", id = 'NSAIDS'), dbc.Collapse(dbc.Card(dbc.CardBody(id="NSAI")),id="NSAI_B")]),
             html.Div([dbc.Button("Opioids Drugs", id = 'opioids'), dbc.Collapse(dbc.Card(dbc.CardBody(id="Opio")),id="Opio_B")]),
-            #dbc.DropdownMenu(label="Drugs", children = [dbc.DropdownMenuItem(id = 'Drugs')], id="Dru")
+            html.Div([dbc.Button(label="Proton Pump Inhibitor", id = 'PPI'), dbc.Collapse(dbc.Card(dbc.CardBody(id='Proton_Pump')),id='PPI_B')])
+            #html.Div([dbc.Button(label="Drugs", id = '' ), dbc.Collapse(dbc.Card(dbc.CardBody(id='')),id='')])
         ]
     )
     return layout
