@@ -99,11 +99,15 @@ def VCF_FileParse (Files_contents, fileName):
         return variantInfo
 
     except Exception as e:
-        return html.Div(
+        layout = html.Div(
             [
-                'There was an error processing this file.'
+                html.H5('There was an error processing this file.'),
+                    dbc.Nav([
+                        dbc.NavItem(dbc.NavLink("Reset", href="/MainWindow"))
+                    ], fill=True)
             ]
         )
+        return ['Error',layout]
 
 # return [Data_Structure]
 def Plot_points (uploaded_info, selected_Files):

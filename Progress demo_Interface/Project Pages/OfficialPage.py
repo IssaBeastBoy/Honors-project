@@ -81,25 +81,35 @@ def display_page(pathname):
     )
 
 def VCF_processing(contents, filename):  
-    if filename is None:
+    if filename == None:
         layout = html.Div(
-        [
-            html.H6(
-                'Drag and Drop .vcf '
-            )
-        ]
+                children =  [
+                        html.H5(
+                            'Drag and Drop .vcf '
+                        )
+                    ]
         ) 
         return layout
     else:
         if '.vcf' not in filename:
-            #... I want to call the .js function here to tell the user that a incorrect file has been uploaded
-            hello = 1
+            layout = html.Div(
+                children = [
+                    html.H5('Incorrect file loaded'),
+                    dbc.Nav([
+                        dbc.NavItem(dbc.NavLink("Reset", href="/MainWindow"))
+                    ], fill=True)
+                ]
+            )
+            return layout
         format_Content = contents.split(',')
         file_information = format_Content[1]
         base64_bytes = file_information.encode('ascii')
         message_bytes = base64.b64decode(base64_bytes)
         file_Content = message_bytes.decode('ascii')
-        File_details.append(VCF_FileParse(file_Content, filename))
+        file_Content = VCF_FileParse(file_Content, filename)
+        if file_Content[0] == 'Error':
+            return file_Content[1]
+        File_details.append(file_Content)
         storeOptions.append(filename)
         PharmacoInformation[2] = filename
         layout = html.Div(
@@ -229,20 +239,21 @@ def custom_Upload(lat, log, contin, loca, is_open):
 
 #Call back for the custom population details
 @app.callback(
-        Output('Popup', 'is_open'),
+        Output('Popup', 'style'),
         [
             Input('NA', 'value'),
-            Input('close', 'n_clicks')
-        ],
-        [State('Popup', 'is_open')]
+            Input('closeCF', 'n_clicks')
+        ]
     ) 
 
-def Custom_popUp(value, close, is_open):
-    if close != None:
-        if close%2 > 0:
-            return not is_open
-    if value != None:
-        return not is_open
+def Custom_popUp(value, clicks):
+    if value == None and clicks == None:
+        return {'display':'none'}
+    if value != None and clicks == None:
+        return {'display':'block'}
+    if value != None and clicks != None:
+        return {'display':'none'}
+    
 
 #Call back for displaying drug anticoagulation table
 @app.callback(

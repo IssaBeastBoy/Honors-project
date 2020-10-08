@@ -250,10 +250,6 @@ Location_form = dbc.FormGroup(
 
 Coors_Form = dbc.FormGroup(
         [
-            dcc.ConfirmDialog(
-                id='confirm',
-                message='Danger! Moving to MainWindow without adding all the required upLoading details',
-            ),
             dbc.Row([
                 dbc.Col(
                 [
@@ -282,26 +278,30 @@ Coors_Form = dbc.FormGroup(
             ),
             dbc.Row(
                     [dbc.Collapse(
-                        dbc.Card(dbc.CardBody(dbc.Button('Submit', id = 'close', color = 'success'))),
+                        dbc.Card(dbc.CardBody(dbc.Button('Submit', id = 'closeCF', color = 'success'))),
                             id="submit",
+                            className = 'Custom_FileB'
                         )]
             )
         ]
     )
 
-Popup = html.Div([
+Popup = html.Div(
+           children= [
                 dbc.Alert(
                     [
-                        html.Center(html.H5('You have added a custom .vcf')),
+                        html.Center(html.H5('Add file.vcf details')),
                         dbc.Form(
                             [Continent_Form, Location_form, Coors_Form]
                         )
                     ],
-                    color = 'success',
-                    is_open = False,
-                    id = 'Popup'
+                    className= 'Popup_content'
                 )
-    ])
+                ]
+            ,
+            style = {"display": "none"},
+            id = 'Popup',
+            className = "Custom_file")
 
 ##app.layout = html.Div([
 ##    dcc.Location(id = 'url', refresh = False),
